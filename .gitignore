@@ -1,0 +1,4 @@
+# 发布目录只放静态产物
+*.log
+.DS_Store
+Thumbs.db
