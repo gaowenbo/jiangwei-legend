@@ -1,0 +1,26 @@
+{
+  "build": {
+    "command": "",
+    "outputDirectory": "."
+  },
+  "headers": [
+    {
+      "source": "/assets/audio/**",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000"
+        }
+      ]
+    },
+    {
+      "source": "/assets/**",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    }
+  ]
+}
