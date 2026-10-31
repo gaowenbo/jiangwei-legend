@@ -1076,11 +1076,13 @@ html, body {
 /* ===== 剧情场景演出层（1:1 原版 op）===== */
 #story-screen .story-actors { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 #story-screen .story-actor {
-  /* 站着的人物要够高才像立绘：9% 宽 + 3:4 比例 */
-  position: absolute; width: 9%; min-width: 64px; text-align: center;
+  /* 原版剧情小人是 48×48 的战斗单位精灵，在 640 宽画面里约占 7.5%。
+   * 旧值 9% 宽 + 3:4 比例（正方形精灵被纵向拉长）→ 偏大且变形。
+   * 现改为 1:1 比例 + 6% 宽，贴近原版观感。 */
+  position: absolute; width: 6%; min-width: 40px; max-width: 76px; text-align: center;
   transition: opacity .3s; filter: drop-shadow(0 3px 6px rgba(0,0,0,.6));
 }
-#story-screen .story-actor .sa-img { width: 100%; aspect-ratio: 3/4; background: transparent; overflow: visible; }
+#story-screen .story-actor .sa-img { width: 100%; aspect-ratio: 1/1; background: transparent; overflow: visible; }
 #story-screen .story-actor .sa-img img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
 #story-screen .story-actor .sa-ph { width: 100%; height: 100%; background: radial-gradient(circle at 50% 35%, #7a5a3a, #3a2416); }
 #story-screen .story-actor .sa-name { font-size: 12px; color: #e8d5a3; text-shadow: 0 1px 2px #000; margin-top: 2px; }
@@ -2199,6 +2201,9 @@ window.JW_OPNAME_TO_OP = {"end":0,"if":1,"comment":2,"else":3,"test_yes_no":4,"t
       leader: !!o.leader,
       ai: o.ai || "normal",
       kind3: !!o.kind3,       // 原版部署表 flags bit1（CountUnits side 3/5）
+      hidden: !!o.hidden,     // 原版部署表 flags bit2：初始不出场（state 1），由 op 0x4c 现身
+      /* 部署条目原坐标：op 0x4c 现身时按它落位（0x4570ee 取部署条目 (x,y)） */
+      deployX: o.deployX, deployY: o.deployY,
       // 原版 AI 附加参数（ai_mode 3/5 追击人物、4/6 目标坐标）
       aiPid: o.aiPid != null ? o.aiPid : null,
       aiX: o.aiX != null ? o.aiX : null,
@@ -2231,10 +2236,17 @@ window.JW_OPNAME_TO_OP = {"end":0,"if":1,"comment":2,"else":3,"test_yes_no":4,"t
       const aiX = s[isEnemy ? 10 : 9];
       const aiY = s[isEnemy ? 11 : 10];
       const clean = (v) => (v === 65535 || v == null ? null : (v | 0));
-      /* 原版部署表 flags：bit0 enemy、bit1 kind3、bit2 hidden（0x449b7b） */
-      const flags = s[1] | 0;
+      /* 原版部署表（rules_ref §10.1）：
+       *   allies 行  = [person, hidden, x, y, dir, lv, promo, ai_mode, ai_person, ai_x, ai_y]
+       *   enemies 行 = [person, kind3, hidden, x, y, dir, lv, promo, ai_mode, ai_person, ai_x, ai_y]
+       * flags = enemy位 | kind3位 | hidden位(bit2)。hidden=1 表示该单位**初始不出场**
+       * （state 1），必须由 op 0x4c 让其现身。
+       * S_00 的 7 个敌将（赵云/轻骑306/307/258/259/266/283）hidden 全为 1 —— 漏解析这个
+       * 字段会导致他们战斗一开场就全部在场，而原版是剧情推进到那一步才登场。 */
+      const hidden = !!(s[isEnemy ? 2 : 1] | 0);
+      const kind3 = isEnemy ? !!(s[1] | 0) : false;
       out.push({ pid: s[0], x, y, lv: lv || 1, ai: ai || 1, promo: promo === 65535 || promo == null ? 0 : promo,
-                 kind3: !!(flags & 2),
+                 kind3, hidden,
                  aiPid: clean(aiPid), aiX: clean(aiX), aiY: clean(aiY) });
     }
     return out;
@@ -2393,8 +2405,10 @@ window.JW_OPNAME_TO_OP = {"end":0,"if":1,"comment":2,"else":3,"test_yes_no":4,"t
       if (placedPids.has(s.pid)) continue; // 玩家行已放置：避免同一人物生成两份（曾致幽灵实例扰乱轮转）
       if (s.x >= w || s.y >= h) { const t = s.x; s.x = s.y; s.y = t; } // 行格式两种排布并存，越界即交换
       if (s.x >= w || s.y >= h) continue;
-      occupied.add(s.x + "," + s.y);
+      /* hidden 单位初始不出场（state 1），**不占用网格**，等 op 0x4c 现身时才落位。 */
+      if (!s.hidden) occupied.add(s.x + "," + s.y);
       units.push(mkUnit(s.pid, s.x, s.y, "friend", applyEq(s.pid, { lv: s.lv, ai: "ai" + s.ai, promo: s.promo,
+        hidden: s.hidden, deployX: s.x, deployY: s.y,
         aiPid: s.aiPid, aiX: s.aiX, aiY: s.aiY })));
     }
 
@@ -2410,27 +2424,35 @@ window.JW_OPNAME_TO_OP = {"end":0,"if":1,"comment":2,"else":3,"test_yes_no":4,"t
         ey = Math.min(Math.max(ey, 0), h - 1);
         clampedEnemies++;
       }
-      if (occupied.has(ex + "," + ey)) {
-        // 同格冲突：就近找空格，找不到则覆盖（避免重复同格导致 AI/寻路异常）
-        let found = false;
-        for (let r = 1; r <= 3 && !found; r++) {
-          for (let dy = -r; dy <= r && !found; dy++) {
-            for (let dx = -r; dx <= r && !found; dx++) {
-              const nx = ex + dx, ny = ey + dy;
-              if (nx >= 0 && ny >= 0 && nx < w && ny < h && !occupied.has(nx + "," + ny)) { ex = nx; ey = ny; found = true; }
+      /* hidden 单位初始不出场：不占格、也不做同格挪动 —— 它的部署坐标要原样保留，
+       * 之后由 op 0x4c 按部署条目坐标让它现身。 */
+      if (!s.hidden) {
+        if (occupied.has(ex + "," + ey)) {
+          // 同格冲突：就近找空格，找不到则覆盖（避免重复同格导致 AI/寻路异常）
+          let found = false;
+          for (let r = 1; r <= 3 && !found; r++) {
+            for (let dy = -r; dy <= r && !found; dy++) {
+              for (let dx = -r; dx <= r && !found; dx++) {
+                const nx = ex + dx, ny = ey + dy;
+                if (nx >= 0 && ny >= 0 && nx < w && ny < h && !occupied.has(nx + "," + ny)) { ex = nx; ey = ny; found = true; }
+              }
             }
           }
         }
+        occupied.add(ex + "," + ey);
       }
-      occupied.add(ex + "," + ey);
       units.push(mkUnit(s.pid, ex, ey, "enemy", applyEq(s.pid, { lv: s.lv, ai: "ai" + s.ai, promo: s.promo,
-        kind3: s.kind3, aiPid: s.aiPid, aiX: s.aiX, aiY: s.aiY })));
+        kind3: s.kind3, hidden: s.hidden, deployX: s.x, deployY: s.y,
+        aiPid: s.aiPid, aiX: s.aiX, aiY: s.aiY })));
     }
 
     // 幽灵清理：任何越界/挂起（@-1）实例不得进入战场（曾致轮转 find 命中旧体）
+    // hidden 单位例外：它们初始 x/y = -1 是「未出场」的正常状态，等 op 0x4c 现身。
     for (let i = units.length - 1; i >= 0; i--) {
       const u = units[i];
-      if (!u || !(u.x >= 0) || !(u.y >= 0)) units.splice(i, 1);
+      if (!u) { units.splice(i, 1); continue; }
+      if (u.def && u.def.hidden) continue;
+      if (!(u.x >= 0) || !(u.y >= 0)) units.splice(i, 1);
     }
 
     // 主角归一：姜维恒为主将（leader），避免部署表差异导致主将漂移
@@ -2869,9 +2891,13 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       // ---- 统一 Graphics（地形/覆盖层/光标/单位图形全部画在这一个对象上） ----
       this._g();
       this.unitLayer = null;
-      for (const u of b.units) this.createUnitSprite(u);
+      /* 只为「在场上」的单位建精灵：hidden 未出场(state1)/撤退(3)/阵亡(0) 都不该有图 */
+      for (const u of b.units) if (u.state === 2) this.createUnitSprite(u);
       // 兜底：把不在地图内的单位挪到可见位置（防止整队不可见）
+      // 注意：state !== 2 的单位（hidden 未出场 / 已撤退 / 已阵亡）**不是**异常，
+      // 它们本来就不该在图上，不能被这个兜底塞进空格。
       for (const u of b.units) {
+        if (u.state !== 2) continue;
         if (u.x >= 0 && u.x < b.map.w && u.y >= 0 && u.y < b.map.h) continue;
         const cell = b.map.get(u.x, u.y);
         if (cell) continue;
@@ -4045,7 +4071,13 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         this.dir = 2; // 0=上 1=右 2=下 3=左
         /* 原版单位 state：0 未出现、1 场外待命、2 在场上、3 已撤退。
          * CountUnits(0x44c8e6) 与 unit_reenter(0x55) 都以 state 为准，不是 hp。 */
-        this.state = 2;
+        /* 原版部署表 hidden 位：初始不出场（state 1 = 已创建但未放置，
+         * 等 op 0x4c 现身时才是 state 2）。 */
+        this.state = def.hidden ? 1 : 2;
+        /* 部署条目原坐标（op 0x4c 现身时按它落位） */
+        this.deployX = def.deployX != null ? def.deployX : this.x;
+        this.deployY = def.deployY != null ? def.deployY : this.y;
+        if (this.state === 1) { this.x = -1; this.y = -1; }
         this.ai = def.ai || "normal";
         this.aiParam = def.aiParam != null ? def.aiParam : (typeof def.ai === "string" ? parseInt(def.ai.replace(/\D/g, "")) || 1 : 1);
         // 原版 AI 附加参数：3/5 → 追击人物；4/6 → 目标坐标
@@ -4550,8 +4582,11 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       for (const u of cfg.units) {
         const unit = new Unit(u.def, u.x, u.y, u.faction);
         this.units.push(unit);
-        const cell = this.map.get(u.x, u.y);
-        if (cell) cell.unit = unit;
+        /* hidden 单位（state 1，初始不出场）不占用网格，等 op 0x4c 现身时才落位 */
+        if (unit.state === 2) {
+          const cell = this.map.get(unit.x, unit.y);
+          if (cell) cell.unit = unit;
+        }
       }
       this.allies = this.units.filter(u => u.faction === "ally");
       this.friends = this.units.filter(u => u.faction === "friend");
@@ -6423,23 +6458,60 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
             break;
           }
           case "op_4b": {
-            // unit place: op_4b [?, person, x, y, ?]（原版开场落位）
-            const pu = this._findUnitByPerson(a[1]);
-            if (pu && pu.isAlive) {
-              const cell = this.map.get(a[2], a[3]);
-              if (cell && (!cell.unit || cell.unit === pu)) {
-                const oc = this.map.get(pu.x, pu.y); if (oc && oc.unit === pu) oc.unit = null;
-                cell.unit = pu; pu.x = a[2]; pu.y = a[3];
+            /* 原版 0x4B（eex_format_doc 行 234，0x415e31）：**设置玩家部署条目 k**。
+             * 参数 [k, x, y, dir, ?]：k 是连续递增的部署条目序号（0,1,2,…），
+             * 后面依次是坐标与朝向 —— 也就是「开局玩家单位的站位表」。
+             * 例：S_40 的 [0,5,1,1,0] [1,5,2,1,0] [2,5,3,1,0] … 是 6 个部署点坐标。
+             * 它**不是**把某个场上单位搬走 —— 旧实现按 person id 找单位并瞬移，
+             * 会把不在场的人物（17/12 等）当成单位乱放。 */
+            const k = a[0] | 0;
+            const dx = a[1] | 0, dy = a[2] | 0, ddir = a[3] !== undefined ? (a[3] | 0) : 2;
+            if (!this._deployEntries) this._deployEntries = [];
+            this._deployEntries[k] = { x: dx, y: dy, dir: ddir };
+            /* 部署条目按序对应我方单位：第 k 条 → 第 k 个我方单位（state 2 的）。
+             * 原版是在开战后按部署表落位，这里把仍在场的我方单位放到对应条目上。 */
+            const mine = this.units.filter(u => u.faction === "ally" && u.state === 2 && u.x >= 0)
+              .sort((p, q) => (p.initialY ?? p.y) - (q.initialY ?? q.y) || (p.initialX ?? p.x) - (q.initialX ?? q.x));
+            const target = mine[k];
+            if (target) {
+              const cell = this.map.get(dx, dy);
+              if (cell && !cell.unit) {
+                const oc = this.map.get(target.x, target.y);
+                if (oc && oc.unit === target) oc.unit = null;
+                cell.unit = target;
+                target.x = dx; target.y = dy; target.dir = ddir;
               }
             }
             break;
           }
           case "actor_move": {
-            const u = this._findUnitByPerson(a[1]);
-            if (u && u.isAlive) {
-              const cell = this.map.get(a[3], a[4]);
-              if (cell && !cell.unit) { cell.unit = u; const oc = this.map.get(u.x, u.y); if (oc) oc.unit = null; u.x = a[3]; u.y = a[4]; }
+            /* 原版 0x32 actor_move（eex_format_doc 行 234，0x4132d4）：
+             * args [mode(0xffff→0), person, slot, x, y, dir]
+             *   mode 0 = person；mode 1 = 玩家第 slot 号槽位上的单位。
+             * 战斗：0x459487(person, x, y, dir) 让单位**沿路径**走到 (x,y) 并转向 dir。
+             * 旧实现是直接瞬移（没有走格、也没转向），与原版的行走演出不符。 */
+            const mode = a[0] !== undefined && a[0] !== 65535 ? (a[0] | 0) : 0;
+            let u = null;
+            if (mode === 1) {
+              const slot = a[2] | 0;
+              u = this.units.find(o => o.faction === "ally" && o.slot === slot && o.state === 2) || null;
+            } else {
+              u = this._findUnitByPerson(a[1] | 0);
             }
+            if (!u || !u.isAlive) break;
+            const tx = a[3] | 0, ty = a[4] | 0;
+            const dir = a[5] !== undefined && a[5] !== 65535 ? (a[5] | 0) : u.dir;
+            if (tx >= 0 && ty >= 0 && this.map.inBounds(tx, ty)) {
+              const cell = this.map.get(tx, ty);
+              if (cell && !cell.unit) {
+                const oc = this.map.get(u.x, u.y);
+                if (oc && oc.unit === u) oc.unit = null;
+                cell.unit = u;
+                u.x = tx; u.y = ty;
+              }
+            }
+            u.dir = dir;
+            if (this.onEvent) this.onEvent({ type: "unitMoved", unit: u.id });
             break;
           }
           case "op_51": {
@@ -6576,24 +6648,42 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
             break;
           }
           case "unit_op_4c": {
-          // 原版 0x4c 援军现身：args [?, pid, ?]，落位在主将附近空格
-          const pid = a[1];
-          if (pid != null && pid !== 65535 && window.JW_REAL && window.JW_REAL.mkUnit && !this.units.some(u => u.pid === pid)) {
-            const lead = this.units.find(u => u.leader && u.isAlive) || this.sideUnits[0];
-            const spot = this.findFreeCellNear(lead ? lead.x : 8, lead ? lead.y : 8);
-            if (spot) {
-              const made = window.JW_REAL.mkUnit(pid, spot.x, spot.y, "friend", { lv: lead ? lead.lv : 1, ai: "ai3" });
-              const unit = new Unit(made.def, spot.x, spot.y, "friend");
-              unit.hasActed = true;
-              this.units.push(unit);
-              this.friends.push(unit);
-              const cell = this.map.get(spot.x, spot.y);
-              if (cell) cell.unit = unit;
-              this.onEvent({ type: "refresh" });
+            /* 原版 0x4C unit_appear（0x414f42，rules_ref §10.6.1）：
+             * args [mode(0xffff→0), person, slot]
+             *   mode 0：person 的单位若处于 state 1（已创建但未放置），
+             *           按其**部署条目坐标**放到最近的空格（0x43f040），state 2，地图居中，
+             *           SE 15，4 tick；HP 不变。必须有该人物的部署条目。
+             *   mode 1：玩家第 slot 号槽位中处于 state 1 的单位，同样放到其部署条目位置。
+             * 用途：让伏兵/援军在剧情推进到那一步时登场。
+             * S_00 开场就是靠它让赵云等 7 名敌将「先隐藏、后现身」。 */
+            const mode = a[0] !== undefined && a[0] !== 65535 ? (a[0] | 0) : 0;
+            let u = null;
+            if (mode === 1) {
+              const slot = a[2] | 0;
+              u = (this.sideUnits || []).find(o => o && o.state === 1 && o.slot === slot) || null;
+            } else {
+              const pid = a[1] | 0;
+              u = this.units.find(o => o.pid === pid && o.state === 1) || null;
             }
+            if (!u) break;
+            /* 落位：优先用部署条目原坐标；被占则找最近空格 */
+            let sx = u.deployX, sy = u.deployY;
+            if (sx == null || sy == null || sx < 0 || sy < 0) { sx = u.x; sy = u.y; }
+            let cell = (sx >= 0 && sy >= 0) ? this.map.get(sx, sy) : null;
+            if (!cell || cell.unit) {
+              const spot = this.findFreeCellNear(sx >= 0 ? sx : 8, sy >= 0 ? sy : 8);
+              if (!spot) break;
+              sx = spot.x; sy = spot.y; cell = this.map.get(sx, sy);
+            }
+            if (!cell) break;
+            cell.unit = u;
+            u.x = sx; u.y = sy;
+            u.state = 2;
+            u.hasActed = false; u.hasMoved = false;
+            if (this.onEvent) this.onEvent({ type: "unitAppear", unit: u.id, x: sx, y: sy });
+            if (this.onEvent) this.onEvent({ type: "refresh" });
+            break;
           }
-          break;
-        }
         case "unit_op_4d": {
           // 原版 0x4d unit_change（0x4150e7）：args [mode, person, slot, x1, y1, x2, y2, side,
           //   status, sel(0 buff攻/1 buff敏/2 异常), ailment, hp, mp]
@@ -7955,6 +8045,10 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
      * 旁白：无立绘、无名字，气泡居中。 */
     _renderBubble(node, isNarr, overlay) {
       const box = this.storyScreen.querySelector(".dialogue-box");
+      /* 换场景时气泡被隐藏过（storyBubbleHide），这里显式恢复，
+       * 否则下一句台词会不可见。 */
+      box.style.opacity = "1";
+      box.style.visibility = "visible";
       const textEl = box.querySelector(".text");
       const nameEl = box.querySelector(".pname-top");
       textEl.innerHTML = (node.text || "").replace(/\*\*(.+?)\*\*/g, "<em>$1</em>");
@@ -8105,7 +8199,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
      * 原实现把 65535 当无效值后按地名哈希乱选图，导致背景与原文不符。 */
     _storyMapIndex(a) {
       const id = Number(a);
-      if (Number.isFinite(id) && id >= 0 && id < 115) { this._curMapIdx = id; return id; }
+      /* 65535（0xFFFF）=「保持当前地形」，原版 change_scene 野外模式大量使用。
+       * 其余合法值 0..57 切换地形图。 */
+      if (Number.isFinite(id) && id >= 0 && id < 58) { this._curMapIdx = id; return id; }
       if (this._curMapIdx != null) return this._curMapIdx;
       this._curMapIdx = 0;
       return 0;
@@ -8144,6 +8240,13 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       this._storyCGCache = this._storyCGCache || {};
       if (this._storyCGCache[url]) { draw(this._storyCGCache[url]); return true; }
       const im = new Image();
+      /* 异步加载期间画布先铺一层底色，避免出现纯黑帧；
+       * 图片到达后再覆盖成真正的 CG。 */
+      {
+        const g0 = canvas.getContext("2d");
+        g0.fillStyle = "#000";
+        g0.fillRect(0, 0, canvas.width, canvas.height);
+      }
       im.onload = () => { this._storyCGCache[url] = im; if (canvas.isConnected) draw(im); };
       im.onerror = () => {};
       im.src = url;
@@ -8159,7 +8262,18 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         if (this.storyCGFrame(cg, canvas)) return true;
         return false;                               // 无对应 CG → 兜底黑场
       }
-      const idx = this._storyMapIndex(a);
+      /* 参数角色（2026-10-31 修正）：
+       *   change_scene [mode, arg1, arg2, arg3, arg4]
+       *   **arg1 才是要显示的资源编号**，三种 mode 一致：
+       *     mode 0 → arg1 = CG 图号（已验证：ch00 的 26 正是港口楼船 mm_026）
+       *     mode 1 → arg1 = 室内/转场编号（150 次调用里 149 次为 30）
+       *     mode 2 → arg1 = **地形图编号**（Hm 编号）；65535 = 保持当前地形
+       *   arg3 是**场景序号**（0..73，正好对应 Pmap.e5 的 74 段装饰/物件表），
+       *   不是地图号 —— 旧实现把 arg3 当地图号，导致 58..73 找不到地图而退回手绘。
+       *   例：ch00「汉中沔阳」那幕是 change_scene[2, 39, 65535, 68, 65535]，
+       *   地形应为 hm39，场景 68 只用于取装饰表。 */
+      const mapArg = (arg1 != null && arg1 >= 0) ? (arg1 | 0) : 0xffff;
+      const idx = this._storyMapIndex(mapArg);
       /* 原版野外背景是实时 3D 地形渲染；这里用 Hm 地图（已按 Spalet-BGR 上色）
        * 做透视投影近似：逐行缩放，越靠下越宽，模拟俯视透视。 */
       /* 场景号已接通（story.js 传 change_scene 的 args[3]）。
@@ -8174,6 +8288,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       const draw = (img) => {
         const g = canvas.getContext("2d");
         g.imageSmoothingEnabled = true;
+        /* 素材是异步加载的：绘制时若画布尺寸尚未就绪会得到 0×0 的空画面，
+         * 所以在这里统一确定尺寸（设 width 会清空画布，必须在 clearRect 之前）。 */
+        if (canvas.width !== 1280 || canvas.height !== 720) { canvas.width = 1280; canvas.height = 720; }
         g.clearRect(0, 0, canvas.width, canvas.height);
         const W = canvas.width, H = canvas.height;
         const sw = img.naturalWidth || img.width;
@@ -8322,7 +8439,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         else if (/夜|更|暮/.test(place)) name = "night";
         else name = "field";
       }
-      canvas.width = 1280; canvas.height = 720;
+      /* 画布尺寸：只在内容真正绘制时设置。canvas.width=... 会清空画布，
+       * 若在这里先设、而素材是异步加载的，就会留下一帧黑屏并覆盖上一次画面。 */
+      if (canvas.width !== 1280 || canvas.height !== 720) { canvas.width = 1280; canvas.height = 720; }
       /* 第三个参数才是 change_scene 的 args[3]（Mmap 场景序号）；第二个是坐标 x */
       /* 画布一旦画上真实场景/CG，就隐藏 CSS 兜底背景（宣纸渐变+远山剪影） */
       holder.classList.add("has-canvas");
@@ -8332,6 +8451,23 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         window.JW.renderBG(canvas, name);
       }
       this.storyCaptionClear(true);
+      /* 换场景时清掉上一屏的残留：场上小人 + 对话气泡。
+       * 用户实测反馈「人物和对话到下一个界面没有消失」——
+       * 原版 change_scene 会整屏重绘，上一幕的站位与台词不会带过来。
+       * 注意：演员随后会被 change_scene 之后的 actor_appear 重新放上去，
+       * 所以这里清空不会导致该出现的角色缺席。 */
+      this.storyActorsClear();
+      this.storyBubbleHide();
+    }
+
+    /* 隐藏对话框但不结束剧情推进（换场景用） */
+    storyBubbleHide() {
+      const box = this.storyScreen && this.storyScreen.querySelector(".dialogue-box");
+      if (box) {
+        box.classList.remove("show");
+        box.style.opacity = "0";
+        box.style.visibility = "hidden";
+      }
     }
     // caption：画面下方 640×80 深色字幕带（原版 y 360..440）
     storyCaption(text, newline) {
@@ -8420,12 +8556,19 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           /* 场上立绘用战斗单位图（Unit_mov 48×48 首帧，原版剧情人物就是这样站着的），
            * 120×120 人物图只用于对话框头像。 */
           const unit = this.unitFigureFor(name);
-          el.innerHTML = `<div class="sa-img">${unit || '<div class="sa-ph"></div>'}</div><div class="sa-name">${name}</div>`;
+          /* 原版剧情场上小人是「裸精灵」：脚下**没有**名字标签
+           * （姓名只出现在对话框与顶栏蓝条）。 */
+          el.innerHTML = `<div class="sa-img">${unit || '<div class="sa-ph"></div>'}</div>`;
           layer.appendChild(el);
         }
+        /* 原版 actor 坐标是 **100×100 的格子坐标**（eex_format_doc 行 206：
+         * 「actor table 0x80×64 B，3×3 cell footprint on a 100×100 cell grid」），
+         * 小人占 3×3 格、**脚踩在格子底边**。
+         * 旧实现把 y 直接当百分比且再减 12（当成了顶部锚点），人跑到画面上方。 */
         const x = (args[1] | 0) / 100, y = (args[2] | 0) / 100;
-        el.style.left = Math.max(2, Math.min(92, x * 100)) + "%";
-        el.style.top = Math.max(10, Math.min(72, y * 100 - 12)) + "%";
+        el.style.left = Math.max(2, Math.min(94, x * 100)) + "%";
+        el.style.top = Math.max(8, Math.min(92, y * 100)) + "%";
+        el.style.transform = "translate(-50%, -100%)";
         el.dataset.x = args[1]; el.dataset.y = args[2];
         el.style.opacity = "1";
         if (args[3] !== undefined && args[3] !== 65535) this._actorFace(el, args[3] | 0);
@@ -8435,8 +8578,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         if (!el) return;
         const x = (args[3] | 0) / 100, y = (args[4] | 0) / 100;
         el.style.transition = "left .8s linear, top .8s linear";
-        el.style.left = Math.max(2, Math.min(92, x * 100)) + "%";
-        el.style.top = Math.max(10, Math.min(72, y * 100 - 12)) + "%";
+        el.style.left = Math.max(2, Math.min(94, x * 100)) + "%";
+        el.style.top = Math.max(8, Math.min(92, y * 100)) + "%";
+        el.style.transform = "translate(-50%, -100%)";
         el.dataset.x = args[3]; el.dataset.y = args[4];
         el.classList.add("sa-walk");
         setTimeout(() => el && el.classList.remove("sa-walk"), 900);
@@ -8485,13 +8629,10 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
     unitFigureFor(who) {
       const p = this._personFor(who);
       if (!p) return "";
-      const cls = p.cls | 0;
-      const v = p.sprite == null ? 0 : (p.sprite | 0);
-      let idx;
-      if (v === 0) idx = 0x44 + cls;
-      else if (v >= 1 && v <= 5) idx = 0x35 + 3 * (v - 1) + cls % 3;
-      else if (v === 6) idx = cls < 40 ? 0x44 : 0x45;
-      else idx = v + 0x3f;
+      /* 与 real.js spriteIndex 同一权威定论（第 34 轮 E2）：
+       * persons[pid].sprite 直接就是 Unit_mov 段号（原版 0x44249f `mov dl,[person+0xF]`）。
+       * 旧公式（v+0x3f 等）抄自兴唐传，姜维传不适用 —— 剧情小人因此张冠李戴。 */
+      const idx = (p.sprite == null || p.sprite < 0) ? (0x44 + (p.cls | 0)) : (p.sprite | 0);
       const sheets = window.JW_UNIT_MOV || [];
       const url = sheets[idx];
       if (!url) return "";

@@ -2,3 +2,8 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# 开发期调试截图与调色板对比图，不进发布仓库
+assets/shot_*.png
+assets/face_grid.png
+assets/fp_*.png
