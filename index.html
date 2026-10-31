@@ -8088,7 +8088,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       if (idx == null) return "";
       const n = String(idx).padStart(3, "0");
       /* 用透明底版本（边缘连通黑色已抠除），贴合原版"立绘直接叠在场景上" */
-      return `assets/figures_t/fig_${n}.png`;
+      return `assets/figures_t/fig_${n}.png?v=2`;
     }
     /* 战斗顶栏双蓝条：显示选中单位与目标的 HP 比例 */
     _updateBattleBars(b) {
@@ -8216,7 +8216,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
     _storyCGCache = null;
     storyCGFrame(idx, canvas) {
       if (idx == null || idx < 0 || idx > 114) return false;
-      const url = `assets/story/mm_${String(idx).padStart(3, "0")}.png`;
+      /* 资源版本号：CG 重新导出后文件名不变，旧构建/浏览器缓存会继续用旧图
+       * （表现为「颜色不对」）。带 ?v= 强制按新内容取。 */
+      const url = `assets/story/mm_${String(idx).padStart(3, "0")}.png?v=2`;
       const draw = (img) => {
         const g = canvas.getContext("2d");
         const W = canvas.width, H = canvas.height;
@@ -8460,7 +8462,8 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       this.storyBubbleHide();
     }
 
-    /* 隐藏对话框但不结束剧情推进（换场景用） */
+    /* 隐藏对话框 + 说话人立绘，但不结束剧情推进（换场景用）。
+     * 用户实测反馈「左上角头像还在」：切场景后气泡藏了，但 .fig-holder 没藏。 */
     storyBubbleHide() {
       const box = this.storyScreen && this.storyScreen.querySelector(".dialogue-box");
       if (box) {
@@ -8468,6 +8471,10 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         box.style.opacity = "0";
         box.style.visibility = "hidden";
       }
+      const fl = this.storyScreen && this.storyScreen.querySelector(".fig-holder.left");
+      const fr = this.storyScreen && this.storyScreen.querySelector(".fig-holder.right");
+      if (fl) fl.classList.remove("show");
+      if (fr) fr.classList.remove("show");
     }
     // caption：画面下方 640×80 深色字幕带（原版 y 360..440）
     storyCaption(text, newline) {
@@ -8669,7 +8676,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       else idx = this.faceIndexFor(who);
       if (idx == null) return "";
       const n = String(idx).padStart(3, "0");
-      return `<img src="assets/figures/fig_${n}.png" alt="" `
+      return `<img src="assets/figures/fig_${n}.png?v=2" alt="" `
         + `style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" `
         + `onerror="this.style.display='none'">`;
     }
