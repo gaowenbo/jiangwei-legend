@@ -6267,8 +6267,11 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           const inRect = (a[3] | 0) === 1;
           const x1 = Math.min(a[4] | 0, a[6] | 0), x2 = Math.max(a[4] | 0, a[6] | 0);
           const y1 = Math.min(a[5] | 0, a[7] | 0), y2 = Math.max(a[5] | 0, a[7] | 0);
+          /* 权威（rules_ref §CountUnits）：在场上（state 2，任意 HP）计数；
+           * _unitsOfSide 已按 state 2 过滤，这里不能再加 isAlive（hp>0），
+           * 否则 HP 归零但尚未移到 state 0 的单位会被漏算。 */
           const pool = this._unitsOfSide(side);
-          const n = pool.filter(u => u && u.isAlive && (inRect
+          const n = pool.filter(u => u && (inRect
             ? (u.x >= x1 && u.x <= x2 && u.y >= y1 && u.y <= y2)
             : true)).length;
           if (cmp === 0) return n >= th;
