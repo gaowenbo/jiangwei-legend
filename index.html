@@ -7522,6 +7522,14 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       this.pendingChoice = null;
       this.lastChoice = 0;      // 原版 Reader+0x2038
       this.flags = {};
+      /* 原版 flag 语义（eex_format_doc §3）：0..255 局部旗（章首 clear_flags 清空），
+       * >255 持久旗（跨章保留、随存档保存）。构造时把持久旗从 flagStore 抄回，
+       * 使 ch00 的选择（难度/随机器/成长 3002/3003 等）在后续章节依然生效。 */
+      if (this.hooks.flagStore) {
+        for (const k of Object.keys(this.hooks.flagStore)) {
+          if ((+k) > 255) this.flags[k] = this.hooks.flagStore[k];
+        }
+      }
       this._timers = [];
     }
 
@@ -7563,15 +7571,19 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       if (this.pendingResolve) { const r = this.pendingResolve; this.pendingResolve = null; r(false); }
     }
 
-    _sleep(ms) {
+    _sleep(ms, full) {
       // 设置里的文字速度（0快/1普通/2慢）缩放剧情停顿
       const sp = window.JW && window.JW.App && window.JW.App.msgFactor ? window.JW.App.msgFactor() : 1;
       ms = ms * sp;
+      /* full=true：原版 0x09 delay 是「阻塞延时 arg×100ms」，不截断（旧实现把
+       * >3s 全部钳到 3s，5s 停顿只剩 3s；16 处 delay(50) 演出节奏被压）。
+       * 其余内部停顿仍保留 3s 上限，防止异常脚本卡死。 */
+      const cap = full ? ms : Math.min(ms, 3000);
       return new Promise((resolve) => {
         const t = setTimeout(() => {
           const i = this._timers.indexOf(t); if (i >= 0) this._timers.splice(i, 1);
           resolve(true);
-        }, Math.max(0, Math.min(ms, 3000)));
+        }, Math.max(0, cap));
         this._timers.push(t);
       });
     }
@@ -7750,7 +7762,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           await this._sleep(550);
           break;
         case "delay":
-          await this._sleep((a[0] | 0) * 100);
+          await this._sleep((a[0] | 0) * 100, true);
           break;
         case "wait_frame":
           await this._sleep((a[0] | 0) * 50);
@@ -7766,7 +7778,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           if (H.onItem) H.onItem(a[0] | 0);
           break;
         case "battle_select_units":
-          if (H.onSortie) await H.onSortie();
+          /* 原版 0x06（0x415b45）：args=[result, max(0→1)→0x4b09ec, 强制人员×5→0x4b09f0,
+           * flags×5→0x4b0a04]。出阵上限与强制出场由 main.js 应用；无参调用保持旧行为。 */
+          if (H.onSortie) await H.onSortie(a);
           break;
         case "goto_scenario": {
           /* 原版 0x11（0x415c67）：GS+7 = arg，结束当前文件 → 下一个加载的
@@ -7783,16 +7797,27 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           return;
         }
         case "set_resource": {
-          // 原版 0x3A：kind 0=gold（mode 1 加算），1/2=GS+6/GS+0x12
-          if ((a[0] | 0) === 0 && H.onResource) H.onResource(a[0] | 0, a[1] | 0, a[2] | 0);
+          // 原版 0x3A：kind 0=gold（mode 1 加算），1/2=GS+6/GS+0x12（0..100，民心类）
+          if (H.onResource) H.onResource(a[0] | 0, a[1] | 0, a[2] | 0);
           break;
         }
-        case "set_flag":
-          this.flags[a[0] | 0] = a[1] !== undefined ? (a[1] | 0) : 1;
+        case "set_flag": {
+          /* 原版 0x0B（0x4142b2）：flag[arg0] = (arg1 != 0)；
+           * >255 是持久旗（随存档保存、跨章保留）→ 实时写回 flagStore（App.flags）。 */
+          const fid = a[0] | 0;
+          this.flags[fid] = a[1] !== undefined ? (a[1] | 0) : 1;
+          if (fid > 255 && H.onFlag) H.onFlag(fid, this.flags[fid]);
           break;
-        case "clear_flags":
-          this.flags = {};
+        }
+        case "clear_flags": {
+          /* 原版 0x0A（0x415ad7）：只清 0..255 局部旗；>255 持久旗保留
+           * （跨章条件依赖，如 3002/3003/1101/1102/1004）。旧实现全清导致
+           * 后续章节基于持久旗的分支永远走「未设置」路径。 */
+          for (const k of Object.keys(this.flags)) {
+            if ((+k) <= 255) delete this.flags[k];
+          }
           break;
+        }
         case "screen_mode": {
           // 原版 0x0F 画面模式：v<3 记结局旗；停音乐；GHAI #6 致谢画面后结束
           if ((a[0] | 0) < 3 && H.onEnding) H.onEnding(a[0] | 0);
@@ -10608,6 +10633,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       // 章节开场剧情（1:1 原版全屏演出场景，可跳过）
       const intro = ch.intro && (ch.intro.script || ch.intro.nodes) ? ch.intro : null;
       this._storyBattleStarted = false;
+      this._sortieConstraint = null; // 出阵约束逐章重新由 battle_select_units 设定，防跨章残留
       if (!skipIntro && intro) {
         // 剧情播完（含战后段落）→ 结算已存在则推进下一章
         this.playStory(intro, () => {
@@ -10631,14 +10657,19 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
     _storyHooks(onBattleCb) {
       const ui = this.ui;
       return {
+        /* 持久旗存储（原版 GS flag >255 持久、随存档保存）：StoryPlayer 构造时
+         * 抄回 >255 旗，set_flag 写回，实现跨章分支（难度/随机器/成长选择等） */
+        flagStore: this.flags,
+        onFlag: (id, v) => { this.flags[id] = v; },
         onSay: (ln, narr) => {
           ui.storySayOverlay({ text: ln.text, who: ln.who }, narr);
           ui.storyHighlight && ui.storyHighlight(ln.who);
         },
         onChoice: (node, cb) => { ui.storyChoiceOverlay(node, cb); },
-        /* 剧情脚本读取资源值（test_resource）：
-         * 0 = 金（本作唯一实装的资源），其余资源号目前没有对应数值来源，返回 0。 */
-        getResource: (kind) => (kind === 0 ? (this.gold || 0) : 0),
+        /* 剧情脚本读取资源值（test_resource，原版 0x37）：
+         * kind 0=金 / 1=GS+6 / 2=GS+0x12（0..100，状态窗口第三栏）。
+         * 旧实现只认 kind 0，其余恒 0 → ch04/ch38/ch39 的民心分支两侧都执行。 */
+        getResource: (kind) => (kind === 0 ? (this.gold || 0) : kind === 1 ? (this.res1 || 0) : (this.res2 || 0)),
         /* test_random 用引擎同一随机源（原版 0x47fb32 走引擎 RNG） */
         rand100: () => Math.random() * 100,
         /* 原版 change_scene 不驱散人物（只有 0x2f/0x11/战斗初始化/读档才清），
@@ -10659,6 +10690,15 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         actorPos: (pid) => ui.actorPos(pid),
         onResource: (kind, mode, val) => {
           if (kind === 0) this.gold = Math.min(9999999, Math.max(0, (this.gold || 0) + val)); // 休闲级开局 +30000
+          else {
+            /* 原版 0x3A kind1/2：0..100 资源（民心等，状态窗口第三栏）；
+             * mode 0=设定 1=加 2=减（0x40d2a9 / 0x40d3ae）。旧实现忽略 kind≠0。 */
+            const key = kind === 1 ? 'res1' : 'res2';
+            const cur = this[key] | 0;
+            let v = mode === 1 ? cur + val : mode === 2 ? cur - val : val;
+            v = Math.min(100, Math.max(0, v));
+            this[key] = v;
+          }
         },
         onItem: (itemId) => {
           const R = window.JW_REAL;
@@ -10670,7 +10710,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
             ui.addLog && ui.addLog(`获得道具：${it.name}`, "heal");
           }
         },
-        onSortie: async () => { await onBattleCb(); },
+        /* 原版 0x06 battle_select_units：args=[result, max(0→1), 强制人员×5, flags×5]。
+         * 出阵上限/强制出场记录到 _sortieConstraint，由 startBattle 应用。 */
+        onSortie: async (a) => { this._sortieConstraint = this._parseSortie(a); await onBattleCb(); },
         onBattle: async () => { await onBattleCb(); },
         onEnd: async () => { await onBattleCb(); },
         // 终章 screen_mode 结局演出（原版 GHAI #6 致谢 → 程序结束回标题）
@@ -10792,8 +10834,28 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       }
     },
 
-    /* 兜底出阵：从 roster（存档队伍）挑人，按等级降序最多 8 人，落在地图下缘空地。
-     * 姜维恒为主将。仅在该战没有任何我方单位时调用。 */
+    /* 原版 0x06（0x415b45）参数排布：args[1]=max（0→1，写 0x4b09ec），
+     * args[2..6]=强制人员 person×5（写 0x4b09f0），args[7..11]=flags×5（0x4b0a04）。
+     * 实测数据里 tag39 列表同样装的是人物 id（如 ch10 的 16/22/36 与 ch09 强制名单同组），
+     * 而 rules_ref §13.6 只把「arg 11」定为真正的排除项 —— 语义未完全收敛，
+     * 因此这里只应用 max 与强制人员（与原版「强制先占满出阵名额」一致），
+     * flags 列表不解释，避免按半截文档把人错误排除。 */
+    _parseSortie(a) {
+      if (!Array.isArray(a) || a.length < 7) return null;
+      let max = a[1] | 0;
+      if (max === 0) max = 1;
+      const forced = [];
+      for (let i = 2; i <= 6 && i < a.length; i++) {
+        const v = a[i] | 0;
+        if (v !== 65535 && v >= 0) forced.push(v);
+      }
+      if (max <= 1 && !forced.length) return null;
+      return { max, forced };
+    },
+
+    /* 兜底出阵：从 roster（原版队伍）挑人，出阵上限/强制出场由 battle_select_units 决定，
+     * 无约束时按等级降序最多 8 人，落在地图下缘空地。姜维恒为主将。
+     * 仅在该战没有任何我方单位时调用。 */
     deployRosterFallback(battle) {
       const R = window.JW_REAL;
       if (!R || !R.mkUnit) return 0;
@@ -10805,10 +10867,22 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         seen.add(pid);
         cand.push({ pid, lv: (rec && rec.lvl) || lv || 1 });
       };
+      /* 强制出场人员最先入选（原版 0x4b09f0；不在 roster 也出场，等级兜底 1） */
+      const sc = this._sortieConstraint;
+      if (sc && sc.forced && sc.forced.length) for (const pid of sc.forced) push(pid, 1);
       push(0, 1);                       // 姜维
       for (const k of Object.keys(this.roster || {})) push(parseInt(k, 10), 1);
-      cand.sort((a, b) => (a.pid === 0 ? -1 : b.pid === 0 ? 1 : b.lv - a.lv));
-      const pick = cand.slice(0, 8);
+      cand.sort((a, b) => {
+        if (sc && sc.forced) {
+          const fa = sc.forced.indexOf(a.pid) >= 0 ? 0 : 1;
+          const fb = sc.forced.indexOf(b.pid) >= 0 ? 0 : 1;
+          if (fa !== fb) return fa - fb;
+        }
+        return (a.pid === 0 ? -1 : b.pid === 0 ? 1 : b.lv - a.lv);
+      });
+      /* 出阵上限（原版 0x4b09ec）：max>1 时钳制人数，否则保持旧 8 人默认 */
+      const cap = sc && sc.max > 1 ? Math.max(1, Math.min(sc.max, 8)) : 8;
+      const pick = cand.slice(0, cap);
       const b = battle;
       const place = () => {
         let n = 0;
@@ -11266,6 +11340,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         battle: this.battle ? this.battle.serialize() : null,
         flags: this.flags || {},
         gold: this.gold || 0,
+        res1: this.res1 || 0, res2: this.res2 || 0,
         warehouse: this.warehouse || [],
         sceneNo: this.sceneNo || 0,
         roster: this.roster || {},
@@ -11308,6 +11383,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         battle: this.battle ? this.battle.serialize() : null,
         flags: this.flags || {},
         gold: this.gold || 0,
+        res1: this.res1 || 0, res2: this.res2 || 0,
         warehouse: this.warehouse || [],
         sceneNo: this.sceneNo || 0,
         roster: this.roster || {},
@@ -11338,6 +11414,8 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       localStorage.setItem("jw_unlocked", JSON.stringify(this.unlocked));
       // 经济/武将状态恢复（原版跨战斗延续）
       if (typeof data.gold === "number") this.gold = data.gold;
+      this.res1 = typeof data.res1 === "number" ? data.res1 : 0;
+      this.res2 = typeof data.res2 === "number" ? data.res2 : 0;
       if (Array.isArray(data.warehouse)) this.warehouse = data.warehouse.map(e => typeof e === "number" ? { id: e, count: 1 } : e).filter(e => e && typeof e.id === "number");
       if (typeof data.sceneNo === "number") this.sceneNo = data.sceneNo;
       if (data.roster) this.roster = data.roster;
