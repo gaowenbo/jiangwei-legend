@@ -2,7 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a0d04">
 <title>三国志·姜维传 — HTML 重制版</title>
 <style>
 /* ============================================================
@@ -49,11 +53,13 @@ html, body {
   user-select: none;
 }
 
-/* 主容器：全屏游戏视窗 */
+/* 主容器：全屏游戏视窗
+ * 移动端地址栏伸缩会让 100vh 与可视区不一致 → 用 dvh（不支持则回落 vh）。 */
 #game-root {
   position: relative;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -1202,6 +1208,181 @@ html, body {
 /* ---- 工具条 SVG 图标（灰色线稿，贴近原版 pictogram 风格） ---- */
 .orig-topbar .otb-icons i.ic { padding: 2px; }
 .orig-topbar .otb-icons i.ic svg { width: 22px; height: 22px; display: block; }
+
+/* ============================================================
+ * 移动端 / 窄屏适配
+ * 设计原则：桌面端（≥900px 宽且横屏）保持原版 1:1 布局不变；
+ * 窄屏或竖屏时按比例缩放，不改变任何语义与玩法。
+ * ============================================================ */
+
+/* 全局：安全区（iPhone 刘海/底部横条）+ 触摸优化 */
+#game-root {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+html, body {
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#battle-grid canvas { touch-action: none; }
+
+/* 触摸设备：按钮放大到可点击尺寸（原版图标 30×32 在手机上太小） */
+@media (hover: none) and (pointer: coarse) {
+  .orig-topbar .otb-icons i { width: 38px; height: 38px; }
+  .orig-topbar .otb-icons i.ic svg { width: 26px; height: 26px; }
+  .jw-btn { min-height: 44px; }
+  #hud .hud-tip { display: none; }
+}
+
+/* ---- 竖屏（手机主场景）---- */
+@media (orientation: portrait) and (max-width: 900px) {
+  /* 顶栏：三行压缩，图标组横滚，血条隐藏（原版顶栏在 390px 下会撑爆）
+   * 注意 #topbar（ID）优先级高于 .orig-topbar，必须同时覆盖。 */
+  #topbar, .orig-topbar { height: 72px; overflow: hidden; }
+  .orig-topbar .otb-menu { height: 18px; flex: 0 0 18px; }
+  .orig-topbar .otb-menu span { font-size: 11px; padding: 0 7px; line-height: 18px; }
+  .orig-topbar .otb-row { flex-direction: column; align-items: stretch; padding: 1px 4px; gap: 1px; }
+  .orig-topbar .otb-icons {
+    display: flex; flex: 0 0 32px; height: 32px;
+    overflow-x: auto; overflow-y: hidden;
+    gap: 1px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .orig-topbar .otb-icons::-webkit-scrollbar { display: none; }
+  .orig-topbar .otb-icons i { flex: 0 0 auto; width: 34px; height: 30px; }
+  .orig-topbar .otb-icons i.ic svg { width: 20px; height: 20px; }
+  .orig-topbar .otb-bars {
+    flex: 0 0 18px; height: 18px; flex-wrap: nowrap;
+    justify-content: flex-start; gap: 0 6px; padding: 0;
+  }
+  .orig-topbar .otb-info { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+  .orig-topbar .otb-round { font-size: 10px; line-height: 16px; white-space: nowrap; }
+  .orig-topbar .otb-unit { font-size: 10px; line-height: 12px; }
+  .orig-topbar .otb-bar { flex: 1 1 auto; width: auto; max-width: none; min-width: 60px; }
+  .orig-topbar .otb-name { font-size: 9px; line-height: 9px; min-height: 9px; }
+  .orig-topbar .otb-track { height: 7px; }
+  .orig-topbar .otb-barsub { display: none; }
+  .orig-topbar .otb-tip { display: none; }
+
+  /* 地图区从新的顶栏高度开始 */
+  #battle-grid { top: 72px; }
+
+  /* HUD 底部状态栏：窄屏改为两行小面板 */
+  #hud { height: 56px; padding: 3px 5px; gap: 4px; }
+  #hud .hud-panel { min-width: 0; padding: 2px 6px; }
+  #hud .hud-panel .label { font-size: 9px; letter-spacing: 0; }
+  #hud .hud-panel .value { font-size: 14px; }
+  #hud .unit-detail { min-width: 0; }
+  #hud .unit-detail .name { font-size: 14px; letter-spacing: 1px; }
+  #hud .unit-detail .stats { gap: 6px; font-size: 10px; }
+
+  /* 剧情气泡：左右两侧固定 300px 在竖屏必溢出 → 通栏底部 */
+  #story-screen .dialogue-box.bubble,
+  #story-screen .dialogue-box.bubble.side-left,
+  #story-screen .dialogue-box.bubble.side-right,
+  #story-screen .dialogue-box.bubble.narr {
+    left: 8px; right: 8px; width: auto; max-width: none;
+    top: auto; bottom: calc(10px + env(safe-area-inset-bottom));
+    transform: none !important;
+    padding: 8px 12px 14px;
+  }
+  #story-screen .dialogue-box.bubble::after { display: none; }
+  #story-screen .dialogue-box.bubble .pname-top { font-size: 15px; letter-spacing: 1px; }
+  #story-screen .dialogue-box.bubble .text { font-size: 15px; line-height: 1.55; }
+  #story-screen .dialogue-box.bubble .advance-hint { font-size: 10px; right: 8px; }
+
+  /* 立绘：竖屏时缩到屏幕上方两侧，且让开 72px 顶栏，不压住底部气泡 */
+  #story-screen .fig-holder {
+    top: 76px;
+    width: clamp(110px, 30vw, 180px);
+    height: clamp(110px, 30vw, 180px);
+  }
+  #story-screen .fig-holder.left { left: 6px; }
+  #story-screen .fig-holder.right { right: 6px; }
+
+  /* 战场对话气泡 */
+  #battle-say-box.battle-say {
+    left: 8px; right: 8px; width: auto; max-width: none;
+    bottom: calc(62px + env(safe-area-inset-bottom));
+    font-size: 14px;
+  }
+  #battle-say-box.battle-say .bs-face { width: 44px; height: 52px; margin-right: 8px; }
+  #battle-say-box.battle-say::after { display: none; }
+
+  /* 战斗大字幕 */
+  #battle-caption { font-size: 26px; letter-spacing: 4px; padding: 10px 20px; }
+
+  /* 战前准备条：允许换行，别把按钮挤出屏幕 */
+  #deploy-bar { left: 6px !important; right: 6px; transform: none !important;
+    flex-wrap: wrap; justify-content: center; }
+  #deploy-bar span { font-size: 12px !important; }
+
+  /* 部署面板 / 结算面板 / 单挑面板：宽度贴合屏幕 */
+  #deploy-screen .deploy-panel { width: calc(100vw - 16px); padding: 14px 16px; }
+  #deploy-screen .deploy-unit-list { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); max-height: 40vh; }
+  #result-screen .result-panel { width: calc(100vw - 24px); padding: 20px 22px; }
+  #result-screen .result-title { font-size: 30px; letter-spacing: 3px; }
+  #result-screen .result-stats { font-size: 13px; }
+  #duel-screen .duel-panel { width: calc(100vw - 16px); margin: 8% auto; padding: 12px; }
+  #duel-screen .duel-fighter { max-width: none; }
+  #duel-screen .duel-title { font-size: 22px; }
+
+  /* 标题屏：字号随屏宽收缩 */
+  #title-screen .title-art { font-size: clamp(38px, 13vw, 90px); letter-spacing: clamp(4px, 2.5vw, 20px); }
+  #title-screen .title-sub { font-size: 13px; letter-spacing: 3px; margin-top: 8px; }
+  #title-screen .menu { margin-top: 26px; gap: 8px; }
+  #title-screen .menu .jw-btn { min-width: 0; width: min(78vw, 260px); font-size: 17px; }
+  #title-screen .decor-brush { width: 76vw; height: 38vw; }
+
+  /* 章节选择：单列 */
+  #chapter-screen .ch-list {
+    grid-template-columns: 1fr;
+    gap: 10px; padding: 12px;
+  }
+  #chapter-screen .ch-card { padding: 12px; }
+  #chapter-screen .ch-card .ch-title { font-size: 18px; }
+
+  /* 浮层菜单：加宽到可触摸 */
+  #command-menu { min-width: 150px; }
+  #command-menu .cmd-item, #target-list .tgt { padding: 11px 15px; font-size: 16px; }
+  #item-panel { min-width: 160px; max-width: calc(100vw - 16px); }
+  #log-panel { width: calc(100vw - 16px); right: 8px; }
+
+  /* 剧情选项：竖屏时列表通栏、贴底部，立绘改为选项框上方的小头像，
+   * 否则 right:100% 会把立绘整块推到屏幕左侧之外。 */
+  #story-screen .choice-list {
+    left: 8px; right: 8px; bottom: calc(12px + env(safe-area-inset-bottom));
+    width: auto; max-width: none; transform: none;
+  }
+  #story-screen .choice-list .jw-btn {
+    font-size: 15px; padding: 10px 12px; text-align: left; white-space: normal;
+  }
+  #story-screen .choice-list .choice-portrait {
+    position: static; display: block; margin: 0 auto 6px;
+    height: 96px; max-width: 100%; transform: none;
+  }
+}
+
+/* ---- 横屏手机（矮屏）：压缩上下留白，保持地图可视高度 ---- */
+@media (orientation: landscape) and (max-height: 500px) {
+  #topbar, .orig-topbar { height: 56px; }
+  #battle-grid { top: 56px; }
+  #hud { height: 48px; padding: 2px 6px; }
+  #hud .hud-panel { padding: 1px 8px; }
+  #hud .hud-panel .label { font-size: 9px; }
+  #hud .hud-panel .value { font-size: 13px; }
+  #hud .unit-detail { min-width: 0; }
+  #hud .hud-tip { display: none; }
+  #story-screen .dialogue-box.bubble { top: auto; bottom: 8px; max-width: 70%; }
+  #story-screen .fig-holder { width: clamp(120px, 22vh, 200px); height: clamp(120px, 30vh, 220px); top: 56px; }
+  #battle-say-box.battle-say { bottom: 56px; width: 60%; max-width: none; }
+  #battle-caption { font-size: 30px; }
+  #title-screen .title-art { font-size: clamp(34px, 8vh, 70px); }
+  #title-screen .menu { margin-top: 16px; }
+  #chapter-screen .ch-list { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; }
+  #deploy-screen .deploy-panel { width: calc(100vw - 16px); }
+  #result-screen .result-panel { width: calc(100vw - 40px); max-width: 460px; }
+}
 
 </style>
 <script>
@@ -3694,6 +3875,9 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
        * 旧实现把右键当平移用，玩家没有明确的"取消"操作。 */
       let dragging = false, dragStart = null;
       cv.addEventListener("pointerdown", (ev) => {
+        /* 触摸由下方 touch* 处理器统一接管（点击/拖动/捏合/长按），
+         * 否则手指按下会立刻被当成一次格点击。 */
+        if (ev.pointerType === "touch") return;
         if (ev.button === 2) {
           ev.preventDefault();
           if (this.onCancel) this.onCancel();
@@ -3719,13 +3903,109 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       window.addEventListener("pointerup", () => { dragging = false; });
       cv.addEventListener("contextmenu", (ev) => ev.preventDefault());
       cv.addEventListener("pointermove", (ev) => {
+        if (ev.pointerType === "touch") return;   // 触摸无 hover 概念，避免预览残留
         const cell = toCell(ev);
         if (!cell) return;
         if (this.hoverCell && this.hoverCell.x === cell.x && this.hoverCell.y === cell.y) return;
         this.hoverCell = cell;
         if (this.onCellHover) this.onCellHover(cell);
       });
+      this._bindTouchInput(cv, toCell);
     }
+
+    /* ---------- 触屏手势 ----------
+     * 原版是鼠标游戏（滚轮缩放 / 中键平移 / 右键取消），手机上三者都没有。
+     * 映射：单指点选格；单指拖动 = 平移；双指捏合 = 缩放；长按 = 取消（Esc 等价）。
+     * 通过位移阈值（8px）区分「点选」与「拖动」，两者不互相吞掉。 */
+    _bindTouchInput(cv, toCell) {
+      if (cv._jwTouchBound) return;
+      cv._jwTouchBound = true;
+      const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const LONG_PRESS_MS = 600;
+      let st = null;
+
+      const reset = () => {
+        if (st && st.lp) clearTimeout(st.lp);
+        st = null;
+      };
+
+      cv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        if (ev.touches.length >= 2) {
+          if (st && st.lp) clearTimeout(st.lp);
+          const a = ev.touches[0], b = ev.touches[1];
+          st = { mode: "pinch", lastD: dist(a, b) };
+          return;
+        }
+        const t = ev.touches[0];
+        if (!t) return;
+        st = {
+          mode: "tap", x0: t.clientX, y0: t.clientY,
+          panX: this.panX, panY: this.panY, moved: false,
+          t0: Date.now(), lp: null,
+        };
+        st.lp = setTimeout(() => {
+          if (st && st.mode === "tap" && !st.moved) {
+            st.mode = "canceled";
+            st.lp = null;
+            if (this.onCancel) this.onCancel();
+          }
+        }, LONG_PRESS_MS);
+      }, { passive: false });
+
+      cv.addEventListener("touchmove", (ev) => {
+        ev.preventDefault();
+        if (!st) return;
+        if (ev.touches.length >= 2) {
+          const a = ev.touches[0], b = ev.touches[1];
+          const d = dist(a, b);
+          const r = cv.getBoundingClientRect();
+          const cx = (a.clientX + b.clientX) / 2 - r.left;
+          const cy = (a.clientY + b.clientY) / 2 - r.top;
+          if (st.mode !== "pinch") { st = { mode: "pinch", lastD: d }; }
+          else if (st.lastD > 0) this.zoomAt(d / st.lastD, cx, cy);
+          st.lastD = d;
+          return;
+        }
+        const t = ev.touches[0];
+        if (!t) return;
+        if (st.mode === "pinch") {                 // 双指抬起一指 → 续为拖动
+          st = { mode: "pan", x0: t.clientX, y0: t.clientY, panX: this.panX, panY: this.panY, moved: true };
+          return;
+        }
+        const dx = t.clientX - st.x0, dy = t.clientY - st.y0;
+        if (!st.moved && Math.hypot(dx, dy) > 8) {
+          st.moved = true;
+          if (st.lp) { clearTimeout(st.lp); st.lp = null; }
+          st.mode = "pan";
+        }
+        if (st.mode === "pan") {
+          this.panX = st.panX + dx;
+          this.panY = st.panY + dy;
+          this.recalcLayout();
+          this.redrawAll();
+          this.refreshUnits();
+        }
+      }, { passive: false });
+
+      cv.addEventListener("touchend", (ev) => {
+        if (!st) return;
+        const s = st;
+        if (ev.touches.length === 0) {
+          if (s.mode === "tap" && !s.moved && Date.now() - s.t0 < 600) {
+            const t = (ev.changedTouches && ev.changedTouches[0]) || null;
+            if (t) {
+              const cell = toCell(t);
+              if (cell && this.onCellClick) this.onCellClick(cell);
+            }
+          }
+          reset();
+        }
+      }, { passive: false });
+
+      cv.addEventListener("touchcancel", () => reset(), { passive: true });
+    }
+
 
     onPointerDown(p) {
       const cell = this.cellAt(p.x, p.y);
@@ -8053,13 +8333,25 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           </div>
         </div>
       `;
-      window.addEventListener("resize", () => {
+      /* 布局重算：窗口尺寸、横竖屏切换、手机地址栏伸缩都会改变可视区。
+       * visualViewport 在 iOS Safari 里比 window.resize 更早/更准。 */
+      const relayout = () => {
         if (this.scene && this.scene.recalcLayout) {
           this.scene.recalcLayout();
           this.scene.redrawAll();
           this.scene.refreshUnits();
         }
-      });
+      };
+      window.addEventListener("resize", relayout);
+      window.addEventListener("orientationchange", () => setTimeout(relayout, 260));
+      if (window.visualViewport) window.visualViewport.addEventListener("resize", relayout);
+      /* 旋转/改尺寸后，已打开的选项框也要重新避让气泡 */
+      const reflowChoice = () => {
+        const l = this.storyScreen && this.storyScreen.querySelector(".choice-list");
+        if (l) this._fitChoiceList(l);
+      };
+      window.addEventListener("orientationchange", () => setTimeout(reflowChoice, 300));
+      window.addEventListener("resize", reflowChoice);
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" || e.key === "Esc") { this.handleEsc(); return; }
         // 回车推进剧情（独立屏 或 叠加层）
@@ -8258,6 +8550,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         list.appendChild(btn);
       });
       this.storyScreen.appendChild(list);
+      this._fitChoiceList(list);
     }
     clearChoice() { const l = this.storyScreen.querySelector(".choice-list"); if (l) l.remove(); }
     storyAdvance() {
@@ -8301,6 +8594,24 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         list.appendChild(btn);
       });
       this.storyScreen.appendChild(list);
+      this._fitChoiceList(list);
+    }
+    /* 选项框避让：窄屏时气泡贴在底部，选项列表若也贴底就会盖住对话框。
+     * 量出气泡实际高度，把选项框抬到气泡上方；宽屏保持原版 fixed bottom:210px。 */
+    _fitChoiceList(list) {
+      if (!list) return;
+      const narrow = window.matchMedia("(orientation: portrait) and (max-width: 900px)").matches;
+      if (!narrow) { list.style.bottom = ""; list.style.maxHeight = ""; list.style.overflowY = ""; return; }
+      const box = this.storyScreen.querySelector(".dialogue-box");
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      let bottom = 12;
+      if (box) {
+        const r = box.getBoundingClientRect();
+        bottom = Math.max(12, Math.round(vh - r.top + 8));
+      }
+      list.style.bottom = bottom + "px";
+      list.style.maxHeight = Math.max(120, vh - bottom - 20) + "px";
+      list.style.overflowY = "auto";
     }
     clearStoryOverlay() {
       this.storyOverlayActive = false;
@@ -10023,14 +10334,14 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       const panel = document.createElement("div");
       panel.style.cssText = "position:fixed;inset:0;z-index:96;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center";
       panel.innerHTML = `
-        <div class="jw-panel" style="padding:18px;min-width:560px;max-width:760px;max-height:86vh;overflow:auto;background:linear-gradient(180deg,#241708,#1a0f06);border:2px solid var(--gold);color:#e8d5a3" id="town-root">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="jw-panel" style="padding:18px;width:min(760px,calc(100vw - 20px));min-width:0;max-height:86vh;overflow:auto;background:linear-gradient(180deg,#241708,#1a0f06);border:2px solid var(--gold);color:#e8d5a3" id="town-root">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div style="font-size:20px;color:var(--gold-bright)">战前准备 · ${app.merchantName()}的营帐</div>
             <div style="flex:1"></div>
             <div style="color:#e8d5a3;font-size:14px">现金 <b style="color:var(--gold-bright)">${app.gold}</b></div>
           </div>
           <div id="town-body"></div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
             <button class="jw-btn" data-t="sell">卖出</button>
             <button class="jw-btn" data-t="buy">买进</button>
             <button class="jw-btn" data-t="equip">装备</button>
@@ -10227,7 +10538,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       const R = window.JW_REAL;
       const items = (R && R.items ? R.items : []).filter(it => it.type >= 18 && it.type <= 80);
       panel.innerHTML = `
-        <div class="jw-panel" style="padding:20px;min-width:500px;max-width:700px;max-height:80vh;overflow-y:auto">
+        <div class="jw-panel" style="padding:20px;width:min(700px,calc(100vw - 20px));min-width:0;max-height:80vh;overflow-y:auto">
           <div style="font-size:20px;color:var(--gold-bright);margin-bottom:16px;text-align:center">商店</div>
           <div style="margin-bottom:8px">金币: <b style="color:var(--gold-bright)">${app.gold}</b></div>
           <div class="shop-list" style="max-height:400px;overflow-y:auto"></div>
