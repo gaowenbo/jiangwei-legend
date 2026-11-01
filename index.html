@@ -5003,12 +5003,15 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       // 回合开始事件
       this.checkBattleEvents("turn_start");
       // 毒伤（§689）：phase 开始 HP -= MaxHP/5（玩家/友军与 person≥210 无名敌）或 /10（有名敌）
+      // 1:1 原版：毒不致死（扣血后至少留 1 HP，不触发 checkDeath）。
       for (const u of this.units) {
         if (u.isAlive && u.status.poison) {
-          const dmg = Math.max(1, Math.floor(u.maxHp / (u.pid != null && u.pid < 210 ? 10 : 5)));
-          u.damage(dmg);
+          // 有名敌(person<210) → /10；玩家/友军及无名敌(person≥210) → /5
+          const isNamedEnemy = u.faction === "enemy" && u.pid != null && u.pid < 210;
+          const dmg = Math.max(1, Math.floor(u.maxHp / (isNamedEnemy ? 10 : 5)));
+          u.hp = Math.max(1, u.hp - dmg);
           if (this.onEvent) this.onEvent({ type: "hit", attacker: "poison", target: u.id, dmg, crit: false, hp: u.hp, maxHp: u.maxHp });
-          if (!u.isAlive) this.checkDeath(u);
+          // 毒伤不致死：不掉到 0，不 checkDeath
         }
       }
       // 各单位重置 + 状态 tick
@@ -5720,6 +5723,15 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       if (wExp > 0 && attacker.weapon != null && attacker.weapon !== 255) {
         if (attacker.gainEquipExp("weapon", wExp) && this.onEvent) this.onEvent({ type: "equipLevelUp", unit: attacker.id, slot: "weapon", lv: attacker.weaponLv });
       }
+      // 策略人物经验（§8.2）：原版施放后一次发放，AOE 各目标取最大（不逐目标累加）
+      if (attacker._stratExpPending != null) {
+        const e = attacker._stratExpPending;
+        delete attacker._stratExpPending;
+        if (this._isPlayer(attacker)) {
+          const up = attacker.gainExp(e);
+          if (up) { if (this.onEvent) this.onEvent({ type: "levelUp", unit: attacker.id, lvl: up.lvl, learnedNew: up.learnedNew }); this.logEntry(`${attacker.name} 升至 ${up.lvl} 级！${up.learnedNew && up.learnedNew.length ? " 学会" + up.learnedNew.map(n=>`【${n}】`).join("") : ""}`, "sys"); }
+        }
+      }
       if (this.onEvent) this.onEvent({ type: "cast", attacker: attacker.id, skill: skillId, targets: targets.map(t=>t.id) });
       this.logEntry(`${attacker.name} 施放【${skill.name}】`, "sys");
       // 应用持续状态
@@ -5812,7 +5824,13 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           const down = effNum <= 10;
           if (!target.buffs) target.buffs = [3, 3, 3, 3, 3, 3];
           const cur = target.buffs[idx] != null ? target.buffs[idx] : 3;
-          target.buffs[idx] = down ? Math.max(1, cur - 1) : Math.min(5, cur + 1);
+          // 1:1 原版施放端跳级（§10 buff）：
+          //   上升：cur<3 → 3；cur>=3 → 6（直接到 ×1.2 档）
+          //   下降：cur>3 → 3；cur<=3 → 0（对称降到 0 档）
+          // （衰减端 ≥4→×1.2 / ≤2→×0.8 已正确，仅此处施放端需跳级）
+          target.buffs[idx] = down
+            ? (cur > 3 ? 3 : 0)
+            : (cur < 3 ? 3 : 6);
           this.logEntry(`【${skill.name}】${target.name} ${down ? "下降" : "上升"}（${["攻击","防御","精神","反应","士气","机动"][idx]}）`, down ? "debuff" : "heal");
           applied = true;
         } else if (STATUS[effNum]) {
@@ -5861,18 +5879,18 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
             if (this.onEvent) this.onEvent({ type: "hit", attacker: attacker.id, target: target.id, dmg: calc.dmg, crit: calc.crit, hp: target.hp, maxHp: target.maxHp });
             this.logEntry(`【${skill.name}】击中 ${target.name} ${calc.dmg}`, "dmg");
             this.checkDeath(target);
-            // 策略经验（§8.2）
+            // 策略经验（§8.2）——原版施放后一次发放，AOE 各目标取最大，不逐目标累加
             if (this._isPlayer(attacker)) {
               const kill = !target.isAlive;
-              const up = attacker.gainExp(attacker.expFromStrategy(target, kill, target.faction === "enemy"));
-              if (up) { if (this.onEvent) this.onEvent({ type: "levelUp", unit: attacker.id, lvl: up.lvl, learnedNew: up.learnedNew }); this.logEntry(`${attacker.name} 升至 ${up.lvl} 级！${up.learnedNew && up.learnedNew.length ? " 学会" + up.learnedNew.map(n=>`【${n}】`).join("") : ""}`, "sys"); }
+              const e = attacker.expFromStrategy(target, kill, target.faction === "enemy");
+              attacker._stratExpPending = Math.max(attacker._stratExpPending || 0, e);
             }
           } else {
             if (this.onEvent) this.onEvent({ type: "miss", attacker: attacker.id, target: target.id });
             this.logEntry(`【${skill.name}】未命中 ${target.name}`, "dmg");
             if (this._isPlayer(attacker)) {
-              const up = attacker.gainExp(attacker.expFromStrategy(target, false, target.faction === "enemy"));
-              if (up) { if (this.onEvent) this.onEvent({ type: "levelUp", unit: attacker.id, lvl: up.lvl, learnedNew: up.learnedNew }); this.logEntry(`${attacker.name} 升至 ${up.lvl} 级！${up.learnedNew && up.learnedNew.length ? " 学会" + up.learnedNew.map(n=>`【${n}】`).join("") : ""}`, "sys"); }
+              const e = attacker.expFromStrategy(target, false, target.faction === "enemy");
+              attacker._stratExpPending = Math.max(attacker._stratExpPending || 0, e);
             }
           }
           break;
