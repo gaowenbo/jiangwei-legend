@@ -3481,6 +3481,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       }
       const rec = { unit: u, img, barW: this.cellPx * 0.9 };
       this.sprites.set(u.id, rec);
+      if (img) img.setFlipX(u.dir === 3);
       return rec;
     }
 
@@ -3708,6 +3709,8 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         else if (step.x > from.x) u.dir = 1;
         else if (step.y > from.y) u.dir = 2;
         else if (step.x < from.x) u.dir = 3;
+        // 翻转 sprite：默认朝右，dir=3（左）时水平翻转
+        if (rec.img) rec.img.setFlipX(u.dir === 3);
         // 一格的插值（分 4 小段，保证逐格而不是跨越）
         const subs = 4;
         for (let i = 1; i <= subs; i++) {
@@ -3797,7 +3800,7 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
     }
 
     /* 播放动作动画；不阻塞战斗逻辑（失败时静默回落到静止帧） */
-    async playUnitAction(unitId, kind) {
+    async playUnitAction(unitId, kind, dx = 0, dy = 0) {
       const rec = this.sprites.get(unitId);
       if (!rec || !rec.img) return;
       const idx = rec.unit && rec.unit.spriteIdx;
@@ -3810,6 +3813,8 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         .setOrigin(0.5, 1).setDepth(21);
       holder.displayHeight = this.cellPx * (kind === "atk" ? 1.28 : 1.12);
       holder.displayWidth = holder.displayHeight * ((kind === "atk" ? 64 : 48) / (kind === "atk" ? 64 : 48));
+      // 攻击/被攻击时朝目标翻转：默认朝右，目标在左侧（dx<0）时翻转
+      if (kind === "atk" && dx !== undefined) rec.img.setFlipX(dx < 0);
       rec.img.setVisible(false);
       for (let i = 0; i < n; i++) {
         if (!holder.active) break;
@@ -11317,8 +11322,8 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         case "hit": {
           const a = u(evt.attacker), t = u(evt.target);
           if (a && t) this.ui.floatText(t.x, t.y, "-" + evt.dmg + (evt.crit ? "!" : ""), evt.crit ? "crit" : "dmg");
-          // 原版动作：攻击方播放 Unit_atk 图集（12 帧）
-          if (a && this.ui.scene && this.ui.scene.playUnitAction) this.ui.scene.playUnitAction(a.id, "atk");
+          // 原版动作：攻击方播放 Unit_atk 图集（12 帧），并朝目标方向翻转
+          if (a && this.ui.scene && this.ui.scene.playUnitAction) this.ui.scene.playUnitAction(a.id, "atk", t.x - a.x, t.y - a.y);
           break;
         }
         case "se": {
