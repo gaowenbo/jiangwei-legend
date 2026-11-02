@@ -2538,8 +2538,8 @@ window.JW_OPNAME_TO_OP = {"end":0,"if":1,"comment":2,"else":3,"test_yes_no":4,"t
     let px, py;
     // 兜底 anchor 优先玩家部署区（flags=1 首行），其次友军首槽
     const anchorRow = allySlots.find(s => Array.isArray(s) && s[0] !== 65535 && (s[1] & 1)) || allySlots.find(s => Array.isArray(s) && s[0] !== 65535) || null;
-    px = anchorRow ? anchorRow[3] : Math.floor(w / 2);
-    py = anchorRow ? anchorRow[2] : h - 3;
+    px = anchorRow ? anchorRow[2] : Math.floor(w / 2);
+    py = anchorRow ? anchorRow[3] : h - 3;
     // 预占友军/敌军格，避免玩家落点重叠
     for (const s of slots(allySlots, false)) occupied.add(s.x + "," + s.y);
     for (const s of slots(enemySlots, true)) occupied.add(s.x + "," + s.y);
