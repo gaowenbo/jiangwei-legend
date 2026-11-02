@@ -3825,6 +3825,30 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       if (rec.img.active) rec.img.setVisible(true);
     }
 
+    /* 死亡动画：闪烁 + 缩小消失，动画结束后销毁精灵（原版阵亡离场） */
+    async playDeathAnim(unitId) {
+      const rec = this.sprites.get(unitId);
+      if (!rec || !rec.img) return;
+      const img = rec.img;
+      const s = this.cellPx;
+      const tw = (target, props, ms) => new Promise(r => {
+        this.tweens.add({ targets: target, ...props, duration: ms, ease: "Linear", onComplete: r });
+      });
+      try {
+        for (let i = 0; i < 4 && img.active; i++) {
+          img.setVisible(i % 2 === 0);
+          await tw(img, { alpha: i % 2 === 0 ? 1 : 0.25 }, 60);
+        }
+        img.setVisible(true);
+        await tw(img, { scaleX: 0.1, scaleY: 0.1, alpha: 0 }, 300);
+      } catch (e) { /* 页面关闭等导致 tweens 失效，忽略 */ }
+      if (img.active) {
+        img.destroy();
+        this.sprites.delete(unitId);
+      }
+      this.redrawAll();
+    }
+
     /* 攻击预览浮签：显示在目标格上方（UI 增强，不参与战斗结算） */
     showPreview(info) {
       if (!info) {
@@ -11382,7 +11406,10 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
         }
         case "death": {
           const d = u(evt.unit);
-          if (d) this.ui.floatText(d.x, d.y, "亡", "dmg");
+          if (d) {
+            this.ui.floatText(d.x, d.y, "亡", "dmg");
+            if (this.ui.scene && this.ui.scene.playDeathAnim) this.ui.scene.playDeathAnim(d.id);
+          }
           // 立即检查胜负
           const res = b.checkWin();
           // 绑定发起结算的 battle 实例：重试后 this.battle 已换代，旧回调必须作废
