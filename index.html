@@ -5099,15 +5099,17 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       this.checkBattleEvents("reach", unit, tx, ty);
       return true;
     }
-    // 取消移动：单位返回初始位置（保留 hasMoved=false）
+    // 取消移动：单位返回本回合移动前位置（保留 hasMoved=false，可继续行动）
     cancelMove(unit) {
-      if (unit.initialX == null || unit.initialY == null) return false;
+      const sx = unit._moveStartX != null ? unit._moveStartX : unit.initialX;
+      const sy = unit._moveStartY != null ? unit._moveStartY : unit.initialY;
+      if (sx == null || sy == null) return false;
       const cur = this.map.get(unit.x, unit.y);
       if (cur && cur.unit === unit) cur.unit = null;
-      const target = this.map.get(unit.initialX, unit.initialY);
+      const target = this.map.get(sx, sy);
       if (!target) return false;
       if (target.unit && target.unit !== unit) return false;
-      unit.x = unit.initialX; unit.y = unit.initialY;
+      unit.x = sx; unit.y = sy;
       target.unit = unit;
       unit.hasMoved = false;
       this.logEntry(`${unit.name} 取消移动，返回 (${unit.x},${unit.y})`);
@@ -9457,23 +9459,11 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
       this.showCursor(x, y);
       if (this.scene && this.scene.setSelection) this.scene.setSelection(u.id);
       this.updateHUD();
-      // 原版：点击单位后直接进入移动模式（显示移动范围）
-      if (!u.hasMoved) {
-        const moveCells = this.battle.moveRange(u);
-        if (moveCells.length) {
-          this.mode = "move";
-          this._moveUnit = u;
-          this.showMoveRange(moveCells);
-          return;
-        }
-        // 无法移动则显示攻击范围
-        this.mode = "select";
-        this.showAttackRange(this.battle.attackRange(u, u.x, u.y));
-        return;
-      }
-      // 已移动过：显示指令菜单
+      // 点击单位后统一显示指令菜单（含攻击/策略/移动/待机），
+      // 不再强制锁定移动模式，避免不移动就无法攻击或施法。
       this.mode = "select";
       this.showCommandMenu(u.x, u.y, u);
+      return;
     }
 
     showCommandMenu(x, y, u) {
