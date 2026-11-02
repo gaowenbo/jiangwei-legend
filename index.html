@@ -3575,20 +3575,6 @@ window.JW_TERRAIN_PALS = [[0,247,255,0,247,255,0,247,255,0,247,255,0,247,255,0,2
           rec.img.setAlpha(u.isAlive ? 1 : 0.28);
           rec.img.displayHeight = this.cellPx * 1.12;
           rec.img.displayWidth = rec.img.displayHeight;   // 48×48 方形帧
-          /* 血量低与行动状态的可视区分：
-           *   血量 < 30%  → 红色 tint（血很少，图标变化）
-           *   已行动    → 灰色 tint（hasActed，行动完显示区分）
-           *   正常       → 白色 tint（未行动）
-           */
-          if (!u.isAlive) {
-            rec.img.setTint(0x555555);
-          } else if (u.hp > 0 && u.hp < u.maxHp * 0.3) {
-            rec.img.setTint(0xff4444);
-          } else if (u.hasActed) {
-            rec.img.setTint(0xaaaaaa);
-          } else {
-            rec.img.clearTint();
-          }
           /* 正在逐格行走的单位由 walkAlongPath 自己控制位置，这里不能再起补间，
            * 否则走完会被 tween 再「滑」一次（表现为瞬移一下）。 */
           if (this._walkingIds && this._walkingIds.has(u.id)) {
