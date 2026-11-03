@@ -1,0 +1,26 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>phaser minimal</title>
+<style>html,body{margin:0;height:100%}#g{width:100%;height:100%}</style></head><body>
+<div id="g"></div>
+<script src="http://127.0.0.1:8090/node_modules/phaser/dist/phaser.min.js"></script>
+<script>
+window.RESULT = null;
+class S extends Phaser.Scene {
+  constructor(){ super("s"); }
+  create(){ this.add.text(50,50,"HELLO",{fontSize:"40px",color:"#ff0"}); window.RESULT = "created"; }
+}
+window.addEventListener("load", () => {
+  const g = new Phaser.Game({
+    type: Phaser.CANVAS, parent: "g", width: 800, height: 600,
+    backgroundColor: "#222", scene: [S], banner: false, audio: { noAudio: true },
+  });
+  window.G = g;
+  setTimeout(() => {
+    window.STATUS = {
+      isRunning: g.isRunning,
+      loopRunning: g.loop.running,
+      sceneStatus: g.scene.getScene("s").sys.settings.status,
+      result: window.RESULT,
+    };
+  }, 1500);
+});
+</script></body></html>

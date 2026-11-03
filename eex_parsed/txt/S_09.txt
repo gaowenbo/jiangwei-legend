@@ -1,0 +1,463 @@
+; S_09.EEX  EEX v1.2  size=19323  scenes=3  scenario_index=19
+
+==============================================================================
+SCENE 0  @16  sections=1
+
+-- section 0.0 @18
+  WHEN 02 comment ""
+  DO:
+000023    0     44 battle_init 
+000025    1     45 battle_settings 0 0 20 0 0 -1 1 36 0 1
+000051    2     46 battle_allies  20 slots
+                 slot  15: 238 1 11 9 0 0 -1 0 -1 7 13
+                 slot  16: 20 1 4 13 2 0 -1 1 -1 7 13
+                 slot  17: -1 1 4 13 1 0 -1 1 -1 7 13
+000463    3     IF 05 test_flags [1010] []   {len=4484, skip->#6}
+000473    4       47 battle_enemies  80 slots
+                 slot  35: 210 -1 -1 18 6 2 4 -1 2 -1 0 0
+                 slot  36: 412 -1 -1 16 7 2 0 -1 1 -1 0 0
+                 slot  37: 413 -1 -1 17 7 2 0 -1 1 -1 0 0
+                 slot  38: 414 -1 -1 18 7 2 0 -1 1 -1 0 0
+                 slot  39: 415 -1 -1 19 7 2 0 -1 1 -1 0 0
+                 slot  40: 416 -1 -1 17 8 2 0 -1 1 -1 0 0
+                 slot  41: 417 -1 -1 18 8 2 0 -1 1 -1 0 0
+                 slot  42: 522 -1 -1 16 5 2 0 -1 1 -1 0 0
+                 slot  43: 523 -1 -1 17 5 2 0 -1 1 -1 0 0
+                 slot  44: 524 -1 -1 18 5 2 0 -1 1 -1 0 0
+                 slot  45: 525 -1 -1 19 5 2 0 -1 1 -1 0 0
+                 slot  46: 526 -1 -1 16 4 2 0 -1 1 -1 0 0
+                 slot  47: 527 -1 -1 17 4 2 0 -1 1 -1 0 0
+                 slot  48: 528 -1 -1 18 4 2 0 -1 1 -1 0 0
+                 slot  49: 529 -1 -1 19 4 2 0 -1 1 -1 0 0
+                 slot  50: 418 -1 -1 16 8 2 -1 -1 -1 -1 0 0
+                 slot  51: 419 -1 -1 19 8 2 -1 -1 -1 -1 0 0
+0015f5    5       }
+0015f7    6     IF 05 test_flags [] [1010]   {len=4484, skip->#9}
+001607    7       47 battle_enemies  80 slots
+                 slot  35: 210 -1 -1 18 6 2 0 -1 2 -1 0 0
+                 slot  36: 412 -1 -1 16 7 2 0 -1 1 -1 0 0
+                 slot  37: 413 -1 -1 17 7 2 0 -1 1 -1 0 0
+                 slot  38: 414 -1 -1 18 7 2 0 -1 1 -1 0 0
+                 slot  39: 415 -1 -1 19 7 2 0 -1 1 -1 0 0
+                 slot  40: 416 -1 -1 17 8 2 0 -1 1 -1 0 0
+                 slot  41: 417 -1 -1 18 8 2 0 -1 1 -1 0 0
+                 slot  42: 522 -1 -1 16 5 2 0 -1 0 -1 0 0
+                 slot  43: 523 -1 -1 17 5 2 0 -1 0 -1 0 0
+                 slot  44: 524 -1 -1 18 5 2 0 -1 0 -1 0 0
+                 slot  45: 525 -1 -1 19 5 2 0 -1 0 -1 0 0
+002789    8       }
+00278b    9     IF 02 comment "HEXи瓁砞﹚"   {len=422, skip->#26}
+00279f   10       4b op_4b 0 1 1 2 0
+0027bb   11       4b op_4b 1 0 1 2 0
+0027d7   12       4b op_4b 2 2 1 2 0
+0027f3   13       4b op_4b 3 17 9 2 0
+00280f   14       4b op_4b 4 19 9 2 0
+00282b   15       4b op_4b 5 18 7 2 0
+002847   16       4b op_4b 6 17 4 2 0
+002863   17       4b op_4b 7 17 2 2 0
+00287f   18       4b op_4b 8 19 3 2 0
+00289b   19       4b op_4b 9 19 2 2 0
+0028b7   20       4b op_4b 10 18 1 2 0
+0028d3   21       4b op_4b 11 17 0 2 0
+0028ef   22       4b op_4b 12 18 2 2 0
+00290b   23       4b op_4b 13 16 1 2 0
+002927   24       4b op_4b 14 19 0 2 0
+002943   25       }
+002945   26     IF 02 comment "�婴H杆称砞﹚"   {len=54, skip->#30}
+00295a   27       48 battle_equipment 20 0 0 0 0 25
+002974   28       48 battle_equipment 238 0 0 0 0 27
+00298e   29       }
+002990   30     27 change_scene 3 -1 -1 -1 9
+0029a6   31     1c fade_out 
+0029a8   32     24 play_sound 36
+0029ae   33     IF 02 comment ""   {len=798, skip->#49}
+0029b7   34       14 dialog "&马忠\n刘胄！我是大汉负责平乱的马忠。\n&马忠\n前任失职的庲降都督张翼已经被调回去\n惩处，你没有必要再起兵了。\n&刘胄\n笑话，你汉人欺压我南人多时的啦，这\n张翼不过是凶手之一，我最终目的还是要\n打倒汉人，夺回我们南人之地的啦。\n&南蛮兵1\n打倒汉人的啦！\n&南蛮兵2\n还我土地的啦！"
+002ac3   35       09 delay 5
+002acb   36       4f unit_op_4f 22 14 -1 -1 1 0
+002ae5   37       4f unit_op_4f 16 14 -1 -1 0 1
+002aff   38       14 dialog "&张嶷\n果然这股积怨不是三言两语就可以了结的\n。现在只有用实力去摆平他们。\n&马忠\n单靠我们的兵力还是不够，本来我有邀请\n孟获出兵，但是他不愿意，所以我只好请\n关将军用了点特殊手段。\n&关索\n唉…到时候，你们可千万要保护我喔。"
+002bdb   39       09 delay 5
+002be3   40       4f unit_op_4f 22 -1 2 -1 1 0
+002bfd   41       4f unit_op_4f 16 -1 2 -1 0 1
+002c17   42       09 delay 5
+002c1f   43       14 dialog "&刘胄\n兄弟们，给这些可恶的汉人一个教训的啦\n，让他们知道我们南人厉害的啦！"
+002c6d   44       09 delay 5
+002c75   45       IF 05 test_flags [1010] []   {len=78, skip->#48}
+002c85   46         14 dialog "&马忠\n为了保持充分战力来镇守南中，我军在这\n场战役不能有任何一个人撤退。"
+002cd1   47         }
+002cd3   48       }
+002cd5   49     IF 05 test_flags [1010] []   {len=86, skip->#52}
+002ce5   50       19 victory_cond_text "胜利条件\n一﹑歼灭所有敌军。\n\n失败条件\n一﹑我军任何一人死亡。\n二﹑回合数超过20。"
+002d39   51       }
+002d3b   52     IF 05 test_flags [] [1010]   {len=97, skip->#55}
+002d4b   53       19 victory_cond_text "胜利条件\n一﹑歼灭所有敌军。\n\n失败条件\n一﹑马忠死亡。\n二﹑回合数超过20。\n一﹑歼灭所有敌军。"
+002daa   54       }
+002dac   55     1a battle_goal_text "一﹑歼灭所有敌军。"
+002dc3   56     14 dialog "印绶条件\n我军和友军全员生存。"
+002de5   57     5a ui_5a 
+002de7   58     08 set_result 1
+002ded   59     }
+
+==============================================================================
+SCENE 1  @2def  sections=24
+
+-- section 1.0 @2df1
+  WHEN 02 comment "ね瓁北��"
+  WHEN 3f test_turn 1 0
+  WHEN 40 test_side 0
+  DO:
+002e16    0     77 int_var_op 2 0 2 0 7
+002e30    1     78 data_transfer 0 1 20 32
+002e44    2     78 data_transfer 0 1 238 32
+002e58    3     }
+
+-- section 1.1 @2e5a
+  WHEN 02 comment ""
+  WHEN 3f test_turn 3 2
+  WHEN 05 test_flags [] [188]
+  DO:
+002e7d    0     4c unit_op_4c 0 20 0
+002e8d    1     4f unit_op_4f 20 16 -1 -1 1 0
+002ea7    2     4f unit_op_4f 16 20 -1 -1 1 0
+002ec1    3     14 dialog "&花鬘\n关索！终于让我找到你了。\n&花鬘\n你胆子还真大，居然敢回来南中的啦。\n&关索\n这是小小的误会，你不要再生气了。\n&花鬘\n误会？你一声不响从南中跑掉是误会？\n给我看到和鲍家三小姐幽会是误会？\n甚至听说你还回去找那个星彩的啦。\n&关索\n那都是…\n&马忠\n我只知道关将军对我说过，他对花鬘姑娘\n一往情深，其他女子不过逢场作戏罢了。\n&关索\n等一下，我没…\n&张嶷\n咳，关将军，大局为重。\n&花鬘\n哼，也不知道是真的还是假的，暂时相信\n你吧。"
+003062    4     09 delay 5
+00306a    5     0b set_flag 188 1
+003076    6     }
+
+-- section 1.2 @3078
+  WHEN 02 comment ""
+  WHEN 3f test_turn 8 2
+  WHEN 05 test_flags [] [189]
+  DO:
+00309b    0     4c unit_op_4c 0 238 0
+0030ab    1     14 dialog "&孟获\n刘胄你快停手，我女儿在战场里面的啦，\n难道你连我女儿也要杀？\n&刘胄\n为了我们南人的尊严的啦，这点牺牲\n算什么？\n&孟获\n去你的，老子受不了了。\n&孟获\n本来想说当个御史中丞说话要文雅点的啦\n，你这混蛋把老子给惹火了。\n&刘胄\n哼，我不服你也很久了，你这个出卖南人\n的奸贼，我要宰了你成为新的南中之王的\n啦。"
+0031d9    2     0b set_flag 189 1
+0031e5    3     }
+
+-- section 1.3 @31e7
+  WHEN 02 comment ""
+  WHEN 25 test_unit_at 1025 7 13
+  WHEN 05 test_flags [] [190]
+  DO:
+003210    0     3d get_item 88 -1 1 1025
+003222    1     0b set_flag 190 1
+00322e    2     }
+
+-- section 1.4 @3230
+  WHEN 02 comment ""
+  WHEN 25 test_unit_at 1025 15 15
+  WHEN 05 test_flags [] [191]
+  DO:
+003259    0     3d get_item 88 -1 1 1025
+00326b    1     0b set_flag 191 1
+003277    2     }
+
+-- section 1.5 @3279
+  WHEN 02 comment ""
+  WHEN 25 test_unit_at 1025 18 6
+  WHEN 05 test_flags [] [192]
+  DO:
+0032a2    0     3d get_item 88 -1 1 1025
+0032b4    1     0b set_flag 192 1
+0032c0    2     }
+
+-- section 1.6 @32c2
+  WHEN 02 comment ""
+  WHEN 2e test_adjacent 16 20 1
+  WHEN 05 test_flags [] [193]
+  DO:
+0032e7    0     4f unit_op_4f 16 20 -1 -1 1 0
+003301    1     4f unit_op_4f 20 16 -1 -1 0 1
+00331b    2     14 dialog "&关索\n谢谢你来帮我。\n&花鬘\n哼，人家可不是为你而来的啦。\n&关索\n（这是傲娇？）"
+00336c    3     0b set_flag 193 1
+003378    4     }
+
+-- section 1.7 @337a
+  WHEN 02 comment ""
+  WHEN 2e test_adjacent 16 238 1
+  WHEN 05 test_flags [] [194]
+  DO:
+00339f    0     4f unit_op_4f 16 238 -1 -1 1 0
+0033b9    1     4f unit_op_4f 238 16 -1 -1 0 1
+0033d3    2     14 dialog "&孟获\n臭小子，若不是看在老婆和女儿的份上，\n老子早就把你大卸八块的啦。\n&关索\n大王饶命呀。\n&孟获\n要是再让老子知道你还有什么拈花惹草\n的事，老子一定砍死你的啦。"
+003474    3     0b set_flag 194 1
+003480    4     }
+
+-- section 1.8 @3482
+  WHEN 02 comment ""
+  WHEN 2e test_adjacent 36 210 1
+  WHEN 05 test_flags [] [195]
+  DO:
+0034a7    0     4f unit_op_4f 36 210 -1 -1 1 0
+0034c1    1     4f unit_op_4f 210 36 -1 -1 0 1
+0034db    2     14 dialog "&马忠\n刘胄，你做这样的事情根本没有意义，\n就算打败我，你也打不过丞相的大军。\n&刘胄\n我不会像孟获那个废物那样败七次，\n我一次就可以打败诸葛亮的啦。\n&马忠\n别说大话了，你连我你都打不过，还妄想\n和丞相交手。"
+0035a7    3     0b set_flag 195 1
+0035b3    4     }
+
+-- section 1.9 @35b5
+  WHEN 02 comment ""
+  WHEN 2e test_adjacent 20 210 1
+  WHEN 05 test_flags [] [196]
+  DO:
+0035da    0     4f unit_op_4f 20 210 -1 -1 1 0
+0035f4    1     4f unit_op_4f 210 20 -1 -1 0 1
+00360e    2     14 dialog "&花鬘\n我看你真正的目的不过就是想当南中王，\n说什么抗暴都是骗人的啦。\n&刘胄\n你懂什么，像你们这种汉南混血的人，怎\n么样都不可能了解我们南中人的需求的啦\n，只有我才能让南中脱离汉人魔爪的啦。"
+0036cb    3     0b set_flag 196 1
+0036d7    4     }
+
+-- section 1.10 @36d9
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 22 210 1
+  WHEN 05 test_flags [] [197,1010]
+  DO:
+003708    0     4f unit_op_4f 22 210 -1 -1 1 0
+003722    1     4f unit_op_4f 210 22 -1 -1 0 1
+00373c    2     14 dialog "&刘胄\n可恶的汉人，我要你们全都不得好死\n的啦。\n&张嶷\n你的心情我可以了解，但是为了大汉，\n现在我就要借你的首级一用。"
+0037b2    3     IF 02 comment "虫珼矪竚"   {len=512, skip->#33}
+0037c3    4       68 duel_setup 22 210 34
+0037d1    5       60 duel_say 1 "刘胄，纳命来吧！" 8
+0037ee    6       60 duel_say 0 "小看我你会倒楣的啦。" 9
+00380f    7       61 duel_end 
+003811    8       64 duel_action 0 2
+00381b    9       65 duel_action2 0 1 0
+003829   10       65 duel_action2 0 1 0
+003837   11       65 duel_action2 0 1 0
+003845   12       65 duel_action2 1 2 1
+003853   13       63 duel_say2 0 "唔啊！" 1
+003866   14       64 duel_action 1 10
+003870   15       63 duel_say2 1 "怎么啦？\n难道你就这点本事？" 1
+003898   16       64 duel_action 0 8
+0038a2   17       63 duel_say2 0 "可、可恶！" 1
+0038b9   18       63 duel_say2 1 "你自豪的南中的作战方式还没有我熟练，\n我管辖的无当飞军可是比南人还要南人。" 1
+00390f   19       64 duel_action 0 2
+003919   20       65 duel_action2 0 1 0
+003927   21       65 duel_action2 0 1 0
+003935   22       65 duel_action2 1 0 1
+003943   23       66 duel_action3 1 1 0
+003951   24       09 delay 15
+003959   25       63 duel_say2 0 "啊……" 1
+00396c   26       64 duel_action 0 11
+003976   27       23 play_music 38 1
+003982   28       62 duel_62 1
+003988   29       64 duel_action 1 1
+003992   30       63 duel_say2 1 "你的勇气我佩服，但是实力却不够。" 1
+0039bf   31       5f duel_start 
+0039c1   32       }
+0039c3   33     14 dialog "&刘胄\n南中人的自由…为什么，我明明站在\n正义的一方…\n&张嶷\n就请你继续怨恨我吧，当我选择成为朝廷\n鹰犬这天，这已经注定了被怨恨的命运。"
+003a4b   34     53 unit_op_53 0 210 0 0 0 0 -1 1
+003a75   35     14 dialog "&张嶷\n斩杀敌将刘胄，现在敌兵全乱了。"
+003a9e   36     3d get_item 101 0 1 22
+003ab0   37     4d unit_op_4d 2 -1 0 0 0 19 19 2 1 0 10 0 0
+003af4   38     0b set_flag 197 1
+003b00   39     }
+
+-- section 1.11 @3b02
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 22 210 1
+  WHEN 41 test_units_in_area 2 1 2 0 0 0 0 0
+  WHEN 05 test_flags [1010,212] [214]
+  DO:
+003b5f    0     4f unit_op_4f 22 210 -1 -1 1 0
+003b79    1     4f unit_op_4f 210 22 -1 -1 0 1
+003b93    2     14 dialog "&刘胄\n可恶的汉人，我要你们全都不得好死\n的啦。\n&张嶷\n你的心情我可以了解，但是为了大汉，\n现在我就要借你的首级一用。"
+003c09    3     IF 02 comment "虫珼矪竚"   {len=512, skip->#33}
+003c1a    4       68 duel_setup 22 210 34
+003c28    5       60 duel_say 1 "刘胄，纳命来吧！" 8
+003c45    6       60 duel_say 0 "小看我你会倒楣的啦。" 9
+003c66    7       61 duel_end 
+003c68    8       64 duel_action 0 2
+003c72    9       65 duel_action2 0 1 0
+003c80   10       65 duel_action2 0 1 0
+003c8e   11       65 duel_action2 0 1 0
+003c9c   12       65 duel_action2 1 2 1
+003caa   13       63 duel_say2 0 "唔啊！" 1
+003cbd   14       64 duel_action 1 10
+003cc7   15       63 duel_say2 1 "怎么啦？\n难道你就这点本事？" 1
+003cef   16       64 duel_action 0 8
+003cf9   17       63 duel_say2 0 "可、可恶！" 1
+003d10   18       63 duel_say2 1 "你自豪的南中的作战方式还没有我熟练，\n我管辖的无当飞军可是比南人还要南人。" 1
+003d66   19       64 duel_action 0 2
+003d70   20       65 duel_action2 0 1 0
+003d7e   21       65 duel_action2 0 1 0
+003d8c   22       65 duel_action2 1 0 1
+003d9a   23       66 duel_action3 1 1 0
+003da8   24       09 delay 15
+003db0   25       63 duel_say2 0 "啊……" 1
+003dc3   26       64 duel_action 0 11
+003dcd   27       23 play_music 38 1
+003dd9   28       62 duel_62 1
+003ddf   29       64 duel_action 1 1
+003de9   30       63 duel_say2 1 "你的勇气我佩服，但是实力却不够。" 1
+003e16   31       5f duel_start 
+003e18   32       }
+003e1a   33     14 dialog "&刘胄\n南中人的自由…为什么，我明明站在\n正义的一方…\n&张嶷\n就请你继续怨恨我吧，当我选择成为朝廷\n鹰犬这天，这已经注定了被怨恨的命运。"
+003ea2   34     53 unit_op_53 0 210 0 0 0 0 -1 1
+003ecc   35     14 dialog "&张嶷\n斩杀敌将刘胄，现在敌兵全乱了。"
+003ef5   36     3d get_item 101 0 1 22
+003f07   37     4d unit_op_4d 2 -1 0 0 0 19 19 2 1 0 10 0 0
+003f4b   38     0b set_flag 214 1
+003f57   39     }
+
+-- section 1.12 @3f59
+  WHEN 02 comment ""
+  WHEN 36 test_attr 210 7 0 2
+  WHEN 05 test_flags [] [198,1010]
+  DO:
+003f86    0     14 dialog "&刘胄\n南中人的自由…为什么，我明明站在\n正义的一方…"
+003fbe    1     53 unit_op_53 0 210 0 0 0 0 -1 1
+003fe8    2     14 dialog "&马忠\n刘胄战死，这下敌兵全乱了。"
+00400d    3     4d unit_op_4d 2 -1 0 0 0 19 19 2 1 0 10 0 0
+004051    4     0b set_flag 198 1
+00405d    5     }
+
+-- section 1.13 @405f
+  WHEN 02 comment ""
+  WHEN 41 test_units_in_area 2 1 2 0 0 0 0 0
+  WHEN 05 test_flags [1010] [212]
+  DO:
+0040a4    0     14 dialog "&刘胄\n南中的弟兄们，打下去！决不能输给残\n暴的汉人！"
+0040dc    1     55 unit_move 0 522 0 16 4 2
+0040fc    2     55 unit_move 0 523 0 17 4 2
+00411c    3     55 unit_move 0 524 0 18 4 2
+00413c    4     55 unit_move 0 526 0 16 5 2
+00415c    5     55 unit_move 0 527 0 17 5 2
+00417c    6     55 unit_move 0 528 0 18 5 2
+00419c    7     55 unit_move 0 412 0 16 7 2
+0041bc    8     55 unit_move 0 413 0 17 7 2
+0041dc    9     55 unit_move 0 414 0 18 7 2
+0041fc   10     55 unit_move 0 416 0 16 8 2
+00421c   11     55 unit_move 0 417 0 17 8 2
+00423c   12     55 unit_move 0 418 0 18 8 2
+00425c   13     09 delay 10
+004264   14     0b set_flag 212 1
+004270   15     }
+
+-- section 1.14 @4272
+  WHEN 02 comment ""
+  WHEN 36 test_attr 210 7 0 2
+  WHEN 05 test_flags [1010] []
+  DO:
+00429d    0     14 dialog "&刘胄\n我是南中之王，不会这么容易倒下。"
+0042c8    1     31 actor_select 0 210 0 0 0 0 6
+0042ee    2     55 unit_move 0 210 0 18 6 2
+00430e    3     14 dialog "&张嶷\n这样下去不是办法，让我用单挑解决他，\n不然这场乱事无法平定。"
+004354    4     }
+
+-- section 1.15 @4356
+  WHEN 02 comment ""
+  WHEN 36 test_attr 36 7 0 2
+  WHEN 05 test_flags [] [74]
+  DO:
+004381    0     14 dialog "&马忠\n南中之梦就此破灭了吗……"
+0043a4    1     53 unit_op_53 0 36 0 0 0 0 6 1
+0043ce    2     49 ui_49 
+0043d0    3     0e ui_0e 
+0043d2    4     0b set_flag 74 1
+0043de    5     }
+
+-- section 1.16 @43e0
+  WHEN 02 comment ""
+  WHEN 36 test_attr 22 7 0 2
+  WHEN 05 test_flags [] [199,1010]
+  DO:
+00440d    0     14 dialog "&张嶷\n一时的败退不要气馁，再战就好。�C"
+004438    1     31 actor_select 0 22 0 0 0 0 6
+00445e    2     0b set_flag 199 1
+00446a    3     }
+
+-- section 1.17 @446c
+  WHEN 02 comment ""
+  WHEN 36 test_attr 22 7 0 2
+  WHEN 05 test_flags [1010] [210]
+  DO:
+004499    0     14 dialog "&张嶷\n这场仗战败，日后我们如何在南中立足？"
+0044c8    1     31 actor_select 0 22 0 0 0 0 6
+0044ee    2     0b set_flag 210 1
+0044fa    3     49 ui_49 
+0044fc    4     0e ui_0e 
+0044fe    5     0d next_scene 
+004500    6     }
+
+-- section 1.18 @4502
+  WHEN 02 comment ""
+  WHEN 36 test_attr 238 7 0 2
+  WHEN 05 test_flags [] [201]
+  DO:
+00452d    0     14 dialog "&孟获\n败退还好的啦，总比被抓第八次好的啦。"
+00455c    1     31 actor_select 0 238 0 0 0 0 6
+004582    2     0b set_flag 201 1
+00458e    3     }
+
+-- section 1.19 @4590
+  WHEN 02 comment ""
+  WHEN 36 test_attr 20 7 0 2
+  WHEN 05 test_flags [] [202]
+  DO:
+0045bb    0     14 dialog "&花鬘\n我可不是因为帮你才弄到撤退的啦。"
+0045e6    1     31 actor_select 0 20 0 0 0 0 6
+00460c    2     0b set_flag 202 1
+004618    3     }
+
+-- section 1.20 @461a
+  WHEN 02 comment ""
+  WHEN 36 test_attr 16 7 0 2
+  WHEN 05 test_flags [] [200,1010]
+  DO:
+004647    0     14 dialog "&关索\n比起战败，我更怕这些女人找我算帐。"
+004674    1     31 actor_select 0 16 0 0 0 0 6
+00469a    2     0b set_flag 200 1
+0046a6    3     }
+
+-- section 1.21 @46a8
+  WHEN 02 comment ""
+  WHEN 36 test_attr 16 7 0 2
+  WHEN 05 test_flags [1010] [211]
+  DO:
+0046d5    0     14 dialog "&关索\n难道是最近纵欲过度？总感觉力不从心。"
+004704    1     31 actor_select 0 16 0 0 0 0 6
+00472a    2     0b set_flag 211 1
+004736    3     49 ui_49 
+004738    4     0e ui_0e 
+00473a    5     0d next_scene 
+00473c    6     }
+
+-- section 1.22 @473e
+  WHEN 02 comment ""
+  WHEN 42 test_event5 
+  WHEN 05 test_flags [] [0]
+  DO:
+004757    0     51 op_51 
+004759    1     14 dialog "&马忠\n很好，终于平定刘胄的乱事。\n&孟获\n真是的，每次碰到这种事，都让老子里外\n不是人的啦。\n&张嶷\n我们这几年为了北伐，加紧对南中人的\n压榨，大家会不满是正常的。\n&张嶷\n这次虽然利用贬谪伯恭（张翼）来暂时\n压抑南中人的不满，但是如果不能改变\n政策的话，南中人还是会再度反抗的。\n&马忠\n这就是我的梦想所在，虽然有些遥远，\n但我会尽力去完成。\n&马忠\n希望南中以后可以变成一块没有歧视和\n纷争的乐土。\n&张嶷\n虽然有点理想化，但是如果是德信的话，\n或许可以做到吧。\n&张嶷\n（只是在这之前，我会帮德信你去挡住\n任何需要沾满鲜血的事情，镇压反抗的\n恶鬼就让我去当就好了。）\n&马忠\n对了，关将军以后有什么打算？\n&关索\n我想暂时留在这里吧。\n（二哥对不起，这个重担我扛不了。）\n&张嶷\n我想花鬘姑娘一定会很开心的。\n&花鬘\n哼，谁会为这点小事开心。（脸红）\n&孟获\n（女儿的心事真是一目了然的啦。）"
+004a4e    2     IF 41 test_units_in_area 4 4 0 0 0 0 0 0   {len=58, skip->#6}
+004a7e    3       14 dialog "达成印绶条件\n我军和友军全员生存。"
+004aa4    4       3d get_item 97 0 1 36
+004ab6    5       }
+004ab8    6     77 int_var_op 2 4080 2 0 1
+004ad2    7     59 op_59 300 48 -1 -1 -1 -1 -1 -1
+004af6    8     77 int_var_op 2 4080 2 0 0
+004b10    9     49 ui_49 
+004b12   10     0d next_scene 
+004b14   11     }
+
+-- section 1.23 @4b16
+  WHEN 02 comment ""
+  WHEN 43 test_event6 
+  WHEN 05 test_flags [] [1]
+  DO:
+004b2f    0     16 info "马忠败给了南中反抗军。"
+004b4a    1     49 ui_49 
+004b4c    2     0e ui_0e 
+004b4e    3     0b set_flag 1 1
+004b5a    4     0d next_scene 
+004b5c    5     }
+
+==============================================================================
+SCENE 2  @4b5e  sections=1
+
+-- section 2.0 @4b60
+  WHEN 02 comment ""
+  DO:
+004b6b    0     24 play_sound 255
+004b71    1     08 set_result 0
+004b77    2     1d fade_in 
+004b79    3     }

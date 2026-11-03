@@ -1,0 +1,968 @@
+; S_23.EEX  EEX v1.2  size=28235  scenes=3  scenario_index=47
+
+==============================================================================
+SCENE 0  @16  sections=1
+
+-- section 0.0 @18
+  WHEN 02 comment "驹玡矪竚"
+  DO:
+00002b    0     44 battle_init 
+00002d    1     45 battle_settings 0 0 30 0 1 -1 1 0 1 1
+000059    2     46 battle_allies  20 slots
+                 slot  15: 7 1 11 14 1 -1 -1 -1 -1 0 0
+00046b    3     IF 05 test_flags [1024] []   {len=4484, skip->#6}
+00047b    4       47 battle_enemies  80 slots
+                 slot  35: 115 0 1 20 6 3 4 -1 1 -1 0 0
+                 slot  36: 236 0 0 16 12 3 2 -1 1 -1 0 0
+                 slot  37: 237 0 1 19 7 3 2 -1 1 -1 0 0
+                 slot  38: 282 0 1 24 4 3 0 -1 1 -1 0 0
+                 slot  39: 283 0 1 25 4 3 0 -1 1 -1 0 0
+                 slot  40: 284 0 1 24 5 3 0 -1 1 -1 0 0
+                 slot  41: 285 0 1 25 5 3 0 -1 1 -1 0 0
+                 slot  42: 286 0 1 24 7 3 0 -1 1 -1 0 0
+                 slot  43: 287 0 1 25 7 3 0 -1 1 -1 0 0
+                 slot  44: 288 0 1 24 8 3 0 -1 1 -1 0 0
+                 slot  45: 310 0 1 20 4 3 0 -1 1 -1 0 0
+                 slot  46: 311 0 1 21 4 3 0 -1 1 -1 0 0
+                 slot  47: 312 0 1 22 4 3 0 -1 1 -1 0 0
+                 slot  48: 313 0 1 23 4 3 0 -1 1 -1 0 0
+                 slot  49: 289 0 1 25 8 3 0 -1 1 -1 0 0
+                 slot  50: 322 0 1 20 8 3 0 -1 1 -1 0 0
+                 slot  51: 323 0 1 21 8 3 0 -1 1 -1 0 0
+                 slot  52: 324 0 1 22 8 3 0 -1 1 -1 0 0
+                 slot  53: 325 0 1 23 8 3 0 -1 1 -1 0 0
+                 slot  54: 326 0 1 20 9 3 0 -1 1 -1 0 0
+                 slot  55: 327 0 1 21 9 3 0 -1 1 -1 0 0
+                 slot  56: 328 0 1 22 9 3 0 -1 1 -1 0 0
+                 slot  57: 329 0 1 23 9 3 0 -1 1 -1 0 0
+                 slot  58: -1 0 0 15 10 2 0 -1 0 -1 0 0
+                 slot  59: 121 0 1 19 6 3 2 -1 1 -1 0 0
+                 slot  60: 506 0 1 20 2 3 0 -1 1 -1 0 0
+                 slot  61: 507 0 1 21 2 3 0 -1 1 -1 0 0
+                 slot  62: 508 0 1 22 2 3 0 -1 1 -1 0 0
+                 slot  63: 509 0 1 23 2 3 0 -1 1 -1 0 0
+                 slot  64: 306 0 0 16 10 3 0 -1 1 -1 0 0
+                 slot  65: 307 0 0 17 11 3 0 -1 1 -1 0 0
+                 slot  66: 308 0 0 18 12 3 0 -1 1 -1 0 0
+                 slot  67: 309 0 1 23 3 3 0 -1 1 -1 0 0
+                 slot  68: 510 0 1 20 10 3 0 -1 1 -1 0 0
+                 slot  69: 511 0 1 21 10 3 0 -1 1 -1 0 0
+                 slot  70: 512 0 1 22 10 3 0 -1 1 -1 0 0
+                 slot  71: 513 0 1 23 10 3 0 -1 1 -1 0 0
+                 slot  72: -1 0 0 13 4 2 0 -1 0 -1 0 0
+                 slot  73: -1 0 0 15 4 2 0 -1 0 -1 0 0
+                 slot  74: -1 0 0 3 28 2 0 -1 0 -1 0 0
+                 slot  75: -1 0 0 9 28 2 0 -1 0 -1 0 0
+                 slot  76: -1 0 0 8 8 2 0 -1 0 -1 0 0
+                 slot  77: -1 0 0 14 4 2 0 -1 0 -1 0 0
+                 slot  78: -1 0 0 18 36 2 6 -1 6 -1 11 0
+                 slot  79: 258 0 1 26 2 3 0 -1 1 -1 0 0
+                 slot  80: 259 0 1 27 2 3 0 -1 1 -1 0 0
+                 slot  81: 260 0 1 26 3 3 0 -1 1 -1 0 0
+                 slot  82: 261 0 1 27 3 3 0 -1 1 -1 0 0
+                 slot  83: 262 0 1 26 4 3 0 -1 1 -1 0 0
+                 slot  84: 263 0 1 27 4 3 0 -1 1 -1 0 0
+                 slot  85: -1 0 1 6 3 2 0 -1 1 -1 0 0
+                 slot  86: -1 0 1 9 1 2 0 -1 1 -1 0 0
+                 slot  87: -1 0 1 7 0 2 6 -1 1 -1 0 0
+                 slot  88: 264 0 1 26 5 3 0 -1 1 -1 0 0
+                 slot  89: 265 0 1 27 5 3 0 -1 1 -1 0 0
+                 slot  90: 266 0 1 26 7 3 0 -1 1 -1 0 0
+                 slot  91: 267 0 1 27 7 3 0 -1 1 -1 0 0
+                 slot  92: 268 0 1 26 8 3 0 -1 1 -1 0 0
+                 slot  93: 269 0 1 27 8 3 0 -1 1 -1 0 0
+                 slot  94: -1 0 1 6 3 2 0 -1 1 -1 0 0
+                 slot  95: -1 0 1 9 1 2 0 -1 1 -1 0 0
+                 slot  96: -1 0 1 7 0 2 4 -1 1 -1 0 0
+                 slot  97: 270 0 1 26 9 3 0 -1 1 -1 0 0
+                 slot  98: 271 0 1 27 9 3 0 -1 1 -1 0 0
+                 slot  99: 272 0 1 26 10 3 0 -1 1 -1 0 0
+                 slot 100: 273 0 1 27 10 3 0 -1 1 -1 0 0
+                 slot 101: -1 0 1 10 1 2 0 -1 1 -1 0 0
+                 slot 102: -1 0 1 9 2 2 0 -1 1 -1 0 0
+                 slot 103: -1 0 1 6 3 2 0 -1 1 -1 0 0
+                 slot 104: -1 0 1 9 1 2 0 -1 1 -1 0 0
+0015fd    5       }
+0015ff    6     IF 05 test_flags [] [1024]   {len=4484, skip->#9}
+00160f    7       47 battle_enemies  80 slots
+                 slot  35: 115 0 1 20 6 3 4 -1 1 -1 0 0
+                 slot  36: 236 0 0 16 12 3 2 -1 1 -1 0 0
+                 slot  37: 237 0 1 19 7 3 2 -1 1 -1 0 0
+                 slot  38: 282 0 1 24 4 3 0 -1 1 -1 0 0
+                 slot  39: 283 0 1 25 4 3 0 -1 1 -1 0 0
+                 slot  40: 284 0 1 24 5 3 0 -1 1 -1 0 0
+                 slot  41: 285 0 1 25 5 3 0 -1 1 -1 0 0
+                 slot  42: 286 0 1 24 7 3 0 -1 1 -1 0 0
+                 slot  43: 287 0 1 25 7 3 0 -1 1 -1 0 0
+                 slot  44: 288 0 1 24 8 3 0 -1 1 -1 0 0
+                 slot  45: 310 0 1 20 4 3 0 -1 1 -1 0 0
+                 slot  46: 311 0 1 21 4 3 0 -1 1 -1 0 0
+                 slot  47: 312 0 1 22 4 3 0 -1 1 -1 0 0
+                 slot  48: 313 0 1 23 4 3 0 -1 1 -1 0 0
+                 slot  49: 289 0 1 25 8 3 0 -1 1 -1 0 0
+                 slot  50: 322 0 1 20 8 3 0 -1 1 -1 0 0
+                 slot  51: 323 0 1 21 8 3 0 -1 1 -1 0 0
+                 slot  52: 324 0 1 22 8 3 0 -1 1 -1 0 0
+                 slot  53: 325 0 1 23 8 3 0 -1 1 -1 0 0
+                 slot  54: 326 0 1 20 9 3 0 -1 1 -1 0 0
+                 slot  55: 327 0 1 21 9 3 0 -1 1 -1 0 0
+                 slot  56: 328 0 1 22 9 3 0 -1 1 -1 0 0
+                 slot  57: 329 0 1 23 9 3 0 -1 1 -1 0 0
+                 slot  58: -1 0 0 15 10 2 0 -1 0 -1 0 0
+                 slot  59: 121 0 1 19 6 3 2 -1 1 -1 0 0
+                 slot  60: 506 0 1 20 2 3 0 -1 1 -1 0 0
+                 slot  61: 507 0 1 21 2 3 0 -1 1 -1 0 0
+                 slot  62: 508 0 1 22 2 3 0 -1 1 -1 0 0
+                 slot  63: 509 0 1 23 2 3 0 -1 1 -1 0 0
+                 slot  64: 306 0 0 16 10 3 0 -1 1 -1 0 0
+                 slot  65: 307 0 0 17 11 3 0 -1 1 -1 0 0
+                 slot  66: 308 0 0 18 12 3 0 -1 1 -1 0 0
+                 slot  67: 309 0 1 23 3 3 0 -1 1 -1 0 0
+                 slot  68: 510 0 1 20 10 3 0 -1 1 -1 0 0
+                 slot  69: 511 0 1 21 10 3 0 -1 1 -1 0 0
+                 slot  70: 512 0 1 22 10 3 0 -1 1 -1 0 0
+                 slot  71: 513 0 1 23 10 3 0 -1 1 -1 0 0
+                 slot  72: -1 0 0 13 4 2 0 -1 0 -1 0 0
+                 slot  73: -1 0 0 15 4 2 0 -1 0 -1 0 0
+                 slot  74: -1 0 0 3 28 2 0 -1 0 -1 0 0
+                 slot  75: -1 0 0 9 28 2 0 -1 0 -1 0 0
+                 slot  76: -1 0 0 8 8 2 0 -1 0 -1 0 0
+                 slot  77: -1 0 0 14 4 2 0 -1 0 -1 0 0
+                 slot  78: -1 0 0 18 36 2 6 -1 6 -1 11 0
+                 slot  79: 258 0 1 26 2 3 0 -1 1 -1 0 0
+                 slot  80: 259 0 1 27 2 3 0 -1 1 -1 0 0
+                 slot  81: 260 0 1 26 3 3 0 -1 1 -1 0 0
+                 slot  82: 261 0 1 27 3 3 0 -1 1 -1 0 0
+                 slot  83: 262 0 1 26 4 3 0 -1 1 -1 0 0
+                 slot  84: 263 0 1 27 4 3 0 -1 1 -1 0 0
+                 slot  85: -1 0 1 6 3 2 0 -1 1 -1 0 0
+                 slot  86: -1 0 1 9 1 2 0 -1 1 -1 0 0
+                 slot  87: -1 0 1 7 0 2 6 -1 1 -1 0 0
+                 slot  88: 264 0 1 26 5 3 0 -1 1 -1 0 0
+                 slot  89: 265 0 1 27 5 3 0 -1 1 -1 0 0
+                 slot  90: 266 0 1 26 7 3 0 -1 1 -1 0 0
+                 slot  91: 267 0 1 27 7 3 0 -1 1 -1 0 0
+                 slot  92: 268 0 1 26 8 3 0 -1 1 -1 0 0
+                 slot  93: 269 0 1 27 8 3 0 -1 1 -1 0 0
+                 slot  94: -1 0 1 6 3 2 0 -1 1 -1 0 0
+                 slot  95: -1 0 1 9 1 2 0 -1 1 -1 0 0
+                 slot  96: -1 0 1 7 0 2 4 -1 1 -1 0 0
+                 slot  97: 270 0 1 26 9 3 0 -1 1 -1 0 0
+                 slot  98: 271 0 1 27 9 3 0 -1 1 -1 0 0
+                 slot  99: 272 0 1 26 10 3 0 -1 1 -1 0 0
+                 slot 100: 273 0 1 27 10 3 0 -1 1 -1 0 0
+                 slot 101: -1 0 1 10 1 2 0 -1 1 -1 0 0
+                 slot 102: -1 0 1 9 2 2 0 -1 1 -1 0 0
+                 slot 103: -1 0 1 6 3 2 0 -1 1 -1 0 0
+                 slot 104: -1 0 1 9 1 2 0 -1 1 -1 0 0
+002791    8       }
+002793    9     IF 02 comment "HEXи瓁砞﹚"   {len=422, skip->#26}
+0027a7   10       4b op_4b 0 11 15 1 1
+0027c3   11       4b op_4b 1 10 15 1 1
+0027df   12       4b op_4b 2 14 14 1 0
+0027fb   13       4b op_4b 3 5 15 1 1
+002817   14       4b op_4b 4 6 15 1 1
+002833   15       4b op_4b 5 7 15 1 1
+00284f   16       4b op_4b 6 8 15 1 1
+00286b   17       4b op_4b 7 9 15 1 1
+002887   18       4b op_4b 8 11 17 1 1
+0028a3   19       4b op_4b 9 11 18 1 1
+0028bf   20       4b op_4b 10 11 19 1 1
+0028db   21       4b op_4b 11 11 20 1 1
+0028f7   22       4b op_4b 12 11 21 1 1
+002913   23       4b op_4b 13 11 22 1 1
+00292f   24       4b op_4b 14 0 0 0 0
+00294b   25       }
+00294d   26     IF 02 comment ""   {len=54, skip->#30}
+002956   27       48 battle_equipment 7 53 0 0 0 0
+002970   28       48 battle_equipment 121 36 0 0 0 0
+00298a   29       }
+00298c   30     27 change_scene 3 -1 -1 -1 36
+0029a2   31     1c fade_out 
+0029a4   32     24 play_sound 2
+0029aa   33     IF 02 comment ""   {len=502, skip->#40}
+0029b3   34       14 dialog "&刘达\n我还以为姜维有多大本事，结果也只是\n派个步兵队前来拖时间。\n&刘达\n王刺史说得没错，趁敌人阵势未摆完之际\n下手奇袭，一定可以大获全胜。\n&袁綝\n说够了没有，有本事就过来受死，废话\n一堆只显得很可笑而已。"
+002a7f   35       09 delay 5
+002a87   36       14 dialog "&刘达\n这家伙居然不知道老子是谁，告诉他老子\n的外号。\n&轻骑兵1\n刘将军大刀舞得一流，外号“刘三刀”！\n三刀之内必可将任何人斩于马下。\n&袁綝\n听都没听过。"
+002b1f   37       50 unit_status 9 7 0 1
+002b31   38       14 dialog "&袁綝\n刚才你说我是在拖时间，那你就大错\n特错了。\n&袁綝\n我要在三刻钟内将你部队全灭，用你的\n人头来给王经一个下马威。"
+002ba7   39       }
+002ba9   40     24 play_sound 101
+002baf   41     19 victory_cond_text "胜利条件\n一﹑敌人全灭。\n\n失败条件\n一﹑姜维死亡。\n二、袁綝死亡。\n三﹑回合数超过30。"
+002c06   42     1a battle_goal_text "全灭敌军"
+002c13   43     14 dialog "印绶条件\n一、三回合内全灭敌人。\n二、触发所有单挑。"
+002c4a   44     5a ui_5a 
+002c4c   45     08 set_result 1
+002c52   46     }
+
+==============================================================================
+SCENE 1  @2c54  sections=41
+
+-- section 1.0 @2c56
+  WHEN 02 comment "ね瓁北��"
+  WHEN 3f test_turn 1 0
+  WHEN 40 test_side 0
+  DO:
+002c7b    0     77 int_var_op 2 0 2 0 7
+002c95    1     78 data_transfer 0 1 7 32
+002ca9    2     }
+
+-- section 1.1 @2cab
+  WHEN 02 comment ""
+  WHEN 41 test_units_in_area 2 0 2 0 0 0 0 0
+  WHEN 05 test_flags [] [2]
+  DO:
+002cee    0     4c unit_op_4c 0 115 0
+002cfe    1     4c unit_op_4c 0 121 0
+002d0e    2     4c unit_op_4c 0 237 0
+002d1e    3     55 unit_move 0 306 0 20 3 3
+002d3e    4     55 unit_move 0 307 0 21 3 3
+002d5e    5     55 unit_move 0 308 0 22 3 3
+002d7e    6     4c unit_op_4c 0 309 0
+002d8e    7     4c unit_op_4c 0 310 0
+002d9e    8     4c unit_op_4c 0 311 0
+002dae    9     4c unit_op_4c 0 312 0
+002dbe   10     4c unit_op_4c 0 313 0
+002dce   11     4c unit_op_4c 0 322 0
+002dde   12     4c unit_op_4c 0 323 0
+002dee   13     4c unit_op_4c 0 324 0
+002dfe   14     4c unit_op_4c 0 325 0
+002e0e   15     4c unit_op_4c 0 326 0
+002e1e   16     4c unit_op_4c 0 327 0
+002e2e   17     4c unit_op_4c 0 328 0
+002e3e   18     4c unit_op_4c 0 329 0
+002e4e   19     4c unit_op_4c 0 506 0
+002e5e   20     4c unit_op_4c 0 507 0
+002e6e   21     4c unit_op_4c 0 508 0
+002e7e   22     4c unit_op_4c 0 509 0
+002e8e   23     4c unit_op_4c 0 510 0
+002e9e   24     4c unit_op_4c 0 511 0
+002eae   25     4c unit_op_4c 0 512 0
+002ebe   26     4c unit_op_4c 0 513 0
+002ece   27     4c unit_op_4c 0 282 0
+002ede   28     4c unit_op_4c 0 283 0
+002eee   29     4c unit_op_4c 0 284 0
+002efe   30     4c unit_op_4c 0 285 0
+002f0e   31     4c unit_op_4c 0 286 0
+002f1e   32     4c unit_op_4c 0 287 0
+002f2e   33     4c unit_op_4c 0 288 0
+002f3e   34     4c unit_op_4c 0 289 0
+002f4e   35     4c unit_op_4c 0 258 0
+002f5e   36     4c unit_op_4c 0 259 0
+002f6e   37     4c unit_op_4c 0 260 0
+002f7e   38     4c unit_op_4c 0 261 0
+002f8e   39     4c unit_op_4c 0 262 0
+002f9e   40     4c unit_op_4c 0 263 0
+002fae   41     4c unit_op_4c 0 264 0
+002fbe   42     4c unit_op_4c 0 265 0
+002fce   43     4c unit_op_4c 0 266 0
+002fde   44     4c unit_op_4c 0 267 0
+002fee   45     4c unit_op_4c 0 268 0
+002ffe   46     4c unit_op_4c 0 269 0
+00300e   47     4c unit_op_4c 0 270 0
+00301e   48     4c unit_op_4c 0 271 0
+00302e   49     4c unit_op_4c 0 272 0
+00303e   50     4c unit_op_4c 0 273 0
+00304e   51     09 delay 5
+003056   52     14 dialog "&郑伦\n不会吧，刘达的部队被全灭？！\n&朱芳\n骑兵队被步兵队全灭，像什么样？"
+0030a2   53     50 unit_status 115 9 0 0
+0030b4   54     14 dialog "&王经\n该死，蜀人居然有这么精良的戟兵队，\n完全失算了。"
+0030ee   55     09 delay 5
+0030f6   56     4c unit_op_4c 1 115 0
+003106   57     4c unit_op_4c 1 115 1
+003116   58     4c unit_op_4c 1 115 3
+003126   59     4c unit_op_4c 1 115 4
+003136   60     4c unit_op_4c 1 115 5
+003146   61     4c unit_op_4c 1 115 6
+003156   62     4c unit_op_4c 1 115 7
+003166   63     4c unit_op_4c 1 115 8
+003176   64     4c unit_op_4c 1 115 9
+003186   65     4c unit_op_4c 1 115 10
+003196   66     4c unit_op_4c 1 115 11
+0031a6   67     4c unit_op_4c 1 115 12
+0031b6   68     4c unit_op_4c 1 115 13
+0031c6   69     4c unit_op_4c 0 7 0
+0031d6   70     09 delay 5
+0031de   71     14 dialog "&姜维\n显通你辛苦了，快点回来和大军集合吧。\n&袁綝\n我的任务已经完成，接下来就交给伯约\n你了。\n&袁綝\n（至少减轻了诸葛果的负担，这也是我这\n笨拙男人唯一可以做的事情。）"
+003285   72     IF 3f test_turn 4 1   {len=56, skip->#76}
+003295   73       14 dialog "达成印绶条件\n三回合内全灭敌人。"
+0032b9   74       3d get_item 97 0 1 9
+0032cb   75       }
+0032cd   76     32 actor_move 0 9 0 11 16 1
+0032ed   77     09 delay 5
+0032f5   78     14 dialog "&姜维\n好，现在布阵完成，准备迎击敌人本队。"
+003324   79     IF 02 comment ""   {len=5222, skip->#206}
+00332d   80       4f unit_op_4f 121 115 -1 -1 0 1
+003347   81       4f unit_op_4f 236 115 -1 -1 0 1
+003361   82       4f unit_op_4f 237 115 -1 -1 0 1
+00337b   83       14 dialog "&王经\n背水摆阵？这下我可真是疑惑了。\n&朱芳\n刺史有什么好疑惑的，直接杀过去，\n把那些蜀人都赶到水里就好了嘛。\n&王经\n真要是这么简单，姜维就不会被认为是我\n大魏的大患了。\n&王经\n（想我王经只是个普通农民，在没有家世\n背景的情况下，侥幸因为崔德儒的推荐而\n步入仕途。）\n&王经\n（虽说娘常告诉我，做人要知足，作官作\n到二千石就行，但我不愿意，我要出头让\n娘过更好的日子。）\n&王经\n（只是官场终究是险恶，去年同乡许允的\n下场令人怵目惊心，和他背景类似的我是\n不是也会被司马家整肃？）\n&王经\n（现在我担任雍州刺史，官位虽大，但是\n面对的挑战更大，如果我不能打败眼前的\n姜维，日后我前途将黯淡无光。）"
+0035bc   84       09 delay 5
+0035c4   85       14 dialog "&郑伦\n刺史您一直在想什么？刚才发呆\n好一阵子。\n&王经\n没什么，现在众将士前进破敌。\n&王经\n我要以强大的骑兵队为先驱，把姜维等人\n逼入洮水中。\n&郑伦\n我“无双上将”郑伦一定不辱使命！\n&王经\n嗯…看你大斧使得好威风。\n&郑伦\n我的大斧早就饥渴难耐了。\n&郑伦\n朱茵，你也快点请命出击吧！\n&王经\n朱芳，这次也拜托你了，希望你能奋勇\n杀敌。\n&朱芳\n呜呜呜…终于有人叫对我的名字，\n我好感动。"
+003737   86       4f unit_op_4f 121 -1 3 -1 0 1
+003751   87       4f unit_op_4f 236 -1 3 -1 0 1
+00376b   88       4f unit_op_4f 237 -1 3 -1 0 1
+003785   89       09 delay 5
+00378d   90       IF 05 test_flags [] [1024]   {len=93, skip->#93}
+00379d   91         14 dialog "&姜维\n以背水之阵迎敌，敌人连人数都没有占\n上风，素质更在我军之下，一定可以顺\n利击破的。"
+0037f8   92         }
+0037fa   93       IF 05 test_flags [1024] []   {len=3622, skip->#199}
+00380a   94         14 dialog "&姜维\n看来敌人真的准备冲过来，一切就照计画\n进行。"
+003840   95         09 delay 5
+003848   96         32 actor_move 0 236 0 13 11 3
+003868   97         32 actor_move 0 121 0 13 12 3
+003888   98         32 actor_move 0 237 0 13 13 3
+0038a8   99         32 actor_move 0 306 0 14 9 3
+0038c8  100         32 actor_move 0 307 0 14 10 3
+0038e8  101         32 actor_move 0 308 0 14 11 3
+003908  102         32 actor_move 0 309 0 14 12 3
+003928  103         32 actor_move 0 310 0 14 13 3
+003948  104         32 actor_move 0 311 0 14 14 3
+003968  105         32 actor_move 0 312 0 14 15 3
+003988  106         32 actor_move 0 313 0 14 16 3
+0039a8  107         32 actor_move 0 322 0 15 9 3
+0039c8  108         32 actor_move 0 323 0 15 10 3
+0039e8  109         32 actor_move 0 324 0 15 11 3
+003a08  110         32 actor_move 0 325 0 15 12 3
+003a28  111         32 actor_move 0 326 0 15 13 3
+003a48  112         32 actor_move 0 327 0 15 14 3
+003a68  113         32 actor_move 0 328 0 15 15 3
+003a88  114         32 actor_move 0 329 0 15 16 3
+003aa8  115         32 actor_move 0 506 0 16 9 3
+003ac8  116         32 actor_move 0 507 0 16 10 3
+003ae8  117         32 actor_move 0 508 0 16 11 3
+003b08  118         32 actor_move 0 509 0 16 12 3
+003b28  119         32 actor_move 0 510 0 16 13 3
+003b48  120         32 actor_move 0 511 0 16 14 3
+003b68  121         32 actor_move 0 512 0 16 15 3
+003b88  122         32 actor_move 0 513 0 16 16 3
+003ba8  123         09 delay 5
+003bb0  124         50 unit_status 121 7 0 1
+003bc2  125         14 dialog "&郑伦\n看到我无双上将郑伦还不让开？\n&朱芳\n我叫朱芳，不是朱茵！\n&姜维\n就凭这样的将领，曹贼还真是人才匮乏。\n&姜维\n在我看来，你们几个在我大汉，大概连\n帮人提刀都不配。\n&郑伦\n什么？！\n&郑伦\n弟兄们，给我冲！\n&朱芳\n宰了他们！\n&姜维\n不好，快逃！"
+003cb3  126         09 delay 5
+003cbb  127         32 actor_move 1 0 0 12 23 1
+003cdb  128         32 actor_move 1 9 1 13 24 1
+003cfb  129         32 actor_move 1 9 2 14 25 1
+003d1b  130         32 actor_move 1 9 3 15 24 1
+003d3b  131         32 actor_move 1 9 4 16 23 1
+003d5b  132         32 actor_move 1 9 5 17 22 1
+003d7b  133         32 actor_move 1 9 6 5 15 1
+003d9b  134         32 actor_move 1 9 7 6 14 1
+003dbb  135         32 actor_move 1 9 8 7 13 1
+003ddb  136         32 actor_move 1 9 9 8 12 1
+003dfb  137         32 actor_move 1 9 10 9 11 1
+003e1b  138         32 actor_move 1 9 11 10 10 1
+003e3b  139         32 actor_move 1 9 12 11 9 1
+003e5b  140         32 actor_move 1 9 13 12 8 1
+003e7b  141         32 actor_move 0 7 11 13 7 1
+003e9b  142         09 delay 5
+003ea3  143         14 dialog "&郑伦\n哈哈！敌人被我们冲开了阵型！\n&王经\n做得好，这场战斗可以说是赢定了。"
+003ef1  144         32 actor_move 0 236 0 5 18 3
+003f11  145         32 actor_move 0 121 0 5 19 3
+003f31  146         32 actor_move 0 237 0 5 20 3
+003f51  147         32 actor_move 0 306 0 6 16 3
+003f71  148         32 actor_move 0 307 0 6 17 3
+003f91  149         32 actor_move 0 308 0 6 18 3
+003fb1  150         32 actor_move 0 309 0 6 19 3
+003fd1  151         32 actor_move 0 310 0 6 20 3
+003ff1  152         32 actor_move 0 311 0 6 21 3
+004011  153         32 actor_move 0 312 0 6 22 3
+004031  154         32 actor_move 0 313 0 6 23 3
+004051  155         32 actor_move 0 322 0 7 16 3
+004071  156         32 actor_move 0 323 0 7 17 3
+004091  157         32 actor_move 0 324 0 7 18 3
+0040b1  158         32 actor_move 0 325 0 7 19 3
+0040d1  159         32 actor_move 0 326 0 7 20 3
+0040f1  160         32 actor_move 0 327 0 7 21 3
+004111  161         32 actor_move 0 328 0 7 22 3
+004131  162         32 actor_move 0 329 0 7 23 3
+004151  163         32 actor_move 0 506 0 8 16 3
+004171  164         32 actor_move 0 507 0 8 17 3
+004191  165         32 actor_move 0 508 0 8 18 3
+0041b1  166         32 actor_move 0 509 0 8 19 3
+0041d1  167         32 actor_move 0 510 0 8 20 3
+0041f1  168         32 actor_move 0 511 0 8 21 3
+004211  169         32 actor_move 0 512 0 8 22 3
+004231  170         32 actor_move 0 513 0 8 23 3
+004251  171         09 delay 5
+004259  172         14 dialog "&姜维\n好，趁现在！"
+004270  173         09 delay 5
+004278  174         32 actor_move 0 0 0 11 17 3
+004298  175         32 actor_move 0 1 0 12 16 3
+0042b8  176         32 actor_move 0 9 0 11 15 3
+0042d8  177         32 actor_move 0 7 0 13 17 3
+0042f8  178         32 actor_move 1 9 3 14 18 3
+004318  179         32 actor_move 1 9 4 15 19 3
+004338  180         32 actor_move 1 9 5 16 20 3
+004358  181         32 actor_move 1 9 6 17 21 3
+004378  182         32 actor_move 1 9 7 16 22 3
+004398  183         32 actor_move 1 9 8 15 23 3
+0043b8  184         32 actor_move 1 9 9 10 14 3
+0043d8  185         32 actor_move 1 9 10 9 13 3
+0043f8  186         32 actor_move 1 9 11 8 12 3
+004418  187         32 actor_move 1 9 12 7 13 3
+004438  188         32 actor_move 1 9 13 6 14 3
+004458  189         09 delay 5
+004460  190         14 dialog "&郑伦\n等一下，好像不太对劲。\n&朱芳\n现在被赶到河边的好像是我们…\n&郑伦\n中计了？！"
+0044b5  191         09 delay 5
+0044bd  192         50 unit_status 115 9 0 1
+0044cf  193         50 unit_status 115 8 0 1
+0044e1  194         14 dialog "&王经\n怎么会这样？前面军队乱了不说，怎么\n后面也跟著乱？"
+00451d  195         4d unit_op_4d 2 -1 0 0 0 27 27 2 1 0 10 0 0
+004561  196         09 delay 5
+004569  197         14 dialog "&姜维\n趁现在把已经进入包围网的敌军消灭，\n这场战斗我们赢定了！\n&张翼\n………\n&廖化\n………\n&夏侯霸\n那个朱头皮就交给我！\n&句扶\n无双上将？我看看你有多厉害。\n&诸葛果\n主公，恭喜您获得如此重大的胜利。"
+00462e  198         }
+004630  199       50 unit_status 1 9 0 1
+004642  200       4f unit_op_4f 0 1 -1 0 1 1
+00465c  201       4f unit_op_4f 9 1 -1 0 1 1
+004676  202       14 dialog "&姜维\n诸葛果！你不要再逞强了。\n&袁綝\n再待下去你就没命了，为什么要拚成\n这样？\n&诸葛果\n不，让我再待在战场一下就好了。\n&姜维\n记住，这场战斗打完后一定要回到汉中\n疗养。\n&袁綝\n（那种坚定的眼神，让我想阻止也无从\n开口。）\n&诸葛果\n是！"
+00475d  203       4f unit_op_4f 0 -1 3 0 1 1
+004777  204       4f unit_op_4f 9 -1 3 0 1 1
+004791  205       }
+004793  206     24 play_sound 77
+004799  207     0b set_flag 2 1
+0047a5  208     }
+
+-- section 1.2 @47a7
+  WHEN 02 comment "驹い矪竚"
+  WHEN 3f test_turn 5 2
+  WHEN 05 test_flags [] [13]
+  DO:
+0047d2    0     50 unit_status 1 9 1 1
+0047e4    1     14 dialog "&诸葛果\n咳﹑咳……\n&姜维\n可恶，这场战斗不能再拖下去。"
+00481e    2     4d unit_op_4d 0 1 0 0 0 0 0 -1 -1 -1 -1 50 0
+004862    3     0b set_flag 13 1
+00486e    4     }
+
+-- section 1.3 @4870
+  WHEN 02 comment "驹い矪竚"
+  WHEN 3f test_turn 10 2
+  WHEN 05 test_flags [] [14]
+  DO:
+00489b    0     50 unit_status 1 9 1 1
+0048ad    1     14 dialog "&诸葛果\n咳﹑咳……\n&宁随\n伯约，快点结束这场战斗。"
+0048e3    2     4d unit_op_4d 0 1 0 0 0 0 0 -1 -1 -1 -1 50 0
+004927    3     0b set_flag 14 1
+004933    4     }
+
+-- section 1.4 @4935
+  WHEN 02 comment "驹い矪竚"
+  WHEN 3f test_turn 15 2
+  WHEN 05 test_flags [] [15]
+  DO:
+004960    0     50 unit_status 1 9 1 1
+004972    1     14 dialog "&诸葛果\n咳﹑咳……\n&柳隐\n老大，小丞相身体状况真的有点不对劲。\n"
+0049b5    2     4d unit_op_4d 0 1 0 0 0 0 0 -1 -1 -1 -1 50 0
+0049f9    3     0b set_flag 15 1
+004a05    4     }
+
+-- section 1.5 @4a07
+  WHEN 02 comment "驹い矪竚"
+  WHEN 3f test_turn 20 2
+  WHEN 05 test_flags [] [16]
+  DO:
+004a32    0     50 unit_status 1 9 1 1
+004a44    1     14 dialog "&诸葛果\n咳﹑咳……\n&句扶\n不能让诸葛姑娘再撑下去了。"
+004a7c    2     4d unit_op_4d 0 1 0 0 0 0 0 -1 -1 -1 -1 50 0
+004ac0    3     0b set_flag 16 1
+004acc    4     }
+
+-- section 1.6 @4ace
+  WHEN 02 comment "驹い矪竚"
+  WHEN 3f test_turn 25 2
+  WHEN 05 test_flags [] [17]
+  DO:
+004af9    0     50 unit_status 1 9 1 1
+004b0b    1     14 dialog "&诸葛果\n咳﹑咳……\n&袁綝\n伯约，你到底在干什么？还不快点解决\n王经，是要害死诸葛果吗？"
+004b64    2     4d unit_op_4d 0 1 0 0 0 0 0 -1 -1 -1 -1 50 0
+004ba8    3     0b set_flag 17 1
+004bb4    4     }
+
+-- section 1.7 @4bb6
+  WHEN 02 comment "驹い矪竚"
+  WHEN 25 test_unit_at 1025 5 19
+  WHEN 05 test_flags [] [20]
+  DO:
+004be7    0     3d get_item 89 -1 1 1025
+004bf9    1     0b set_flag 20 1
+004c05    2     }
+
+-- section 1.8 @4c07
+  WHEN 02 comment "驹い矪竚"
+  WHEN 25 test_unit_at 1025 7 16
+  WHEN 05 test_flags [] [21]
+  DO:
+004c38    0     3d get_item 91 -1 1 1025
+004c4a    1     0b set_flag 21 1
+004c56    2     }
+
+-- section 1.9 @4c58
+  WHEN 02 comment "驹い矪竚"
+  WHEN 25 test_unit_at 1025 9 21
+  WHEN 05 test_flags [] [22]
+  DO:
+004c89    0     3d get_item 96 -1 1 1025
+004c9b    1     0b set_flag 22 1
+004ca7    2     }
+
+-- section 1.10 @4ca9
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 9 236 1
+  WHEN 05 test_flags [] [40]
+  DO:
+004cd6    0     4f unit_op_4f 9 236 -1 -1 1 0
+004cf0    1     4f unit_op_4f 236 9 -1 -1 0 1
+004d0a    2     14 dialog "&袁綝\n你说你叫“刘三刀”，口气真不小。\n&刘达\n哼！没有人在我手下可以撑过三刀。"
+004d5c    3     IF 02 comment ""   {len=747, skip->#43}
+004d65    4       68 duel_setup 9 236 34
+004d73    5       60 duel_say 0 "三刀内必取你性命！" 9
+004d92    6       60 duel_say 1 "看你有多大本事。" 0
+004daf    7       09 delay 5
+004db7    8       61 duel_end 
+004db9    9       09 delay 5
+004dc1   10       63 duel_say2 1 "快点过来吧，我让你三刀。" 1
+004de6   11       63 duel_say2 0 "混蛋，敢瞧不起我？" 1
+004e05   12       64 duel_action 0 10
+004e0f   13       64 duel_action 0 2
+004e19   14       63 duel_say2 0 "第一刀，苍生劫！\n" 1
+004e37   15       65 duel_action2 0 1 0
+004e45   16       63 duel_say2 1 "不怎么样。" 1
+004e5c   17       63 duel_say2 0 "第二刀，众生灭！" 1
+004e79   18       65 duel_action2 0 1 0
+004e87   19       63 duel_say2 1 "你还剩一刀。" 1
+004ea0   20       63 duel_say2 0 "（这家伙好像真不好惹。）" 1
+004ec5   21       63 duel_say2 0 "第三刀，还汝一刀！" 1
+004ee4   22       65 duel_action2 0 1 1
+004ef2   23       63 duel_say2 1 "就这样？现在换我了！" 1
+004f13   24       65 duel_action2 1 0 0
+004f21   25       64 duel_action 0 4
+004f2b   26       64 duel_action 0 4
+004f35   27       64 duel_action 0 12
+004f3f   28       63 duel_say2 0 "和我好像是不同世界的人一样…\n你究竟是什么人？" 1
+004f79   29       64 duel_action 0 3
+004f83   30       09 delay 3
+004f8b   31       63 duel_say2 1 "大汉征西将军袁綝！" 1
+004faa   32       09 delay 3
+004fb2   33       64 duel_action 1 3
+004fbc   34       65 duel_action2 1 0 1
+004fca   35       64 duel_action 0 12
+004fd4   36       63 duel_say2 0 "我“刘三刀”命丧于此，\n绝对不是技不如人…" 1
+00500a   37       09 delay 5
+005012   38       23 play_music 38 1
+00501e   39       62 duel_62 1
+005024   40       63 duel_say2 1 "算算我杀他还没用到三刀呢。\n" 1
+00504c   41       5f duel_start 
+00504e   42       }
+005050   43     14 dialog "&刘达\n哇！"
+00505f   44     53 unit_op_53 0 236 0 0 0 0 6 1
+005089   45     14 dialog "&袁綝\n刘三刀？真是笑死人了！"
+0050aa   46     3d get_item 98 0 1 9
+0050bc   47     0b set_flag 40 1
+0050c8   48     }
+
+-- section 1.11 @50ca
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 7 237 1
+  WHEN 05 test_flags [] [41]
+  DO:
+0050f7    0     4f unit_op_4f 7 237 -1 -1 1 0
+005111    1     4f unit_op_4f 237 7 -1 -1 0 1
+00512b    2     14 dialog "&夏侯霸\n朱头皮，纳命来！\n&朱芳\n我叫朱芳！"
+005159    3     IF 02 comment "虫珼矪竚"   {len=492, skip->#31}
+00516a    4       68 duel_setup 7 237 34
+005178    5       60 duel_say 0 "臭老头，为了报王大人的恩情，\n我不得不杀你！" 9
+0051b0    6       60 duel_say 1 "现在的年轻人都已经忘记\n夏侯家称霸的年代了？" 6
+0051e8    7       61 duel_end 
+0051ea    8       65 duel_action2 0 1 0
+0051f8    9       65 duel_action2 0 1 0
+005206   10       65 duel_action2 0 1 0
+005214   11       63 duel_say2 1 "真没用，可悲现在大魏只剩你这种人。" 1
+005243   12       63 duel_say2 0 "唔唔、不妙。" 1
+00525c   13       64 duel_action 0 1
+005266   14       64 duel_action 1 8
+005270   15       63 duel_say2 1 "想跑！？不是说要报恩？" 1
+005293   16       64 duel_action 1 2
+00529d   17       66 duel_action3 1 1 0
+0052ab   18       64 duel_action 1 1
+0052b5   19       66 duel_action3 1 1 0
+0052c3   20       63 duel_say2 0 "哇啊啊～！" 1
+0052da   21       64 duel_action 0 11
+0052e4   22       23 play_music 38 1
+0052f0   23       62 duel_62 1
+0052f6   24       64 duel_action 1 1
+005300   25       64 duel_action 1 9
+00530a   26       09 delay 5
+005312   27       64 duel_action 1 8
+00531c   28       63 duel_say2 1 "看见大魏的将领这么弱，\n这种感觉真是复杂。" 1
+005352   29       5f duel_start 
+005354   30       }
+005356   31     53 unit_op_53 0 237 0 0 0 0 -1 1
+005380   32     3d get_item 102 -1 1 7
+005392   33     0b set_flag 41 1
+00539e   34     }
+
+-- section 1.12 @53a0
+  WHEN 02 comment ""
+  WHEN 2e test_adjacent 4 121 1
+  WHEN 05 test_flags [] [42]
+  DO:
+0053c5    0     4f unit_op_4f 4 121 0 0 1 0
+0053df    1     4f unit_op_4f 121 4 0 0 0 1
+0053f9    2     14 dialog "&郑伦\n你是谁？在我“无双上将”郑伦面前也敢\n用斧？\n&句扶\n我才觉得奇怪，之前才刚死一个徐质，现\n在又冒出郑伦，你们曹贼怎么那么多爱用\n斧的。\n&郑伦\n用斧的只要一个人就够了。\n&句扶\n我同意。"
+0054b4    3     IF 02 comment "虫珼矪竚"   {len=497, skip->#38}
+0054c5    4       68 duel_setup 4 121 34
+0054d3    5       60 duel_say 0 "小心了，我的大斧早就\n饥渴难耐了。" 10
+005501    6       60 duel_say 1 "说什么鬼话？" 0
+00551a    7       09 delay 5
+005522    8       61 duel_end 
+005524    9       63 duel_say2 0 "杀呀！" 1
+005537   10       64 duel_action 0 2
+005541   11       65 duel_action2 0 1 0
+00554f   12       65 duel_action2 0 1 0
+00555d   13       65 duel_action2 0 1 0
+00556b   14       63 duel_say2 1 "哼！" 1
+00557c   15       65 duel_action2 1 1 0
+00558a   16       65 duel_action2 1 1 0
+005598   17       65 duel_action2 1 1 0
+0055a6   18       09 delay 3
+0055ae   19       65 duel_action2 0 1 0
+0055bc   20       09 delay 3
+0055c4   21       65 duel_action2 1 1 0
+0055d2   22       09 delay 3
+0055da   23       65 duel_action2 0 1 0
+0055e8   24       09 delay 3
+0055f0   25       65 duel_action2 1 1 0
+0055fe   26       65 duel_action2 0 2 0
+00560c   27       63 duel_say2 0 "哈哈！知道我郑伦的厉害的吧！" 1
+005635   28       09 delay 3
+00563d   29       63 duel_say2 1 "看来我是该认真一点了。" 1
+005660   30       63 duel_say2 1 "牙旋豪斧！" 1
+005677   31       64 duel_action 1 2
+005681   32       66 duel_action3 1 1 0
+00568f   33       63 duel_say2 0 "哇！" 1
+0056a0   34       64 duel_action 0 12
+0056aa   35       09 delay 3
+0056b2   36       5f duel_start 
+0056b4   37       }
+0056b6   38     14 dialog "&句扶\n你这算是哪门子的无双上将，不是说你的\n大斧很饥渴？\n&郑伦\n哼，我的大斧在节食不行吗？"
+005713   39     31 actor_select 0 121 0 0 0 0 0
+005739   40     0b set_flag 42 1
+005745   41     }
+
+-- section 1.13 @5747
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 0 115 1
+  WHEN 05 test_flags [1024] [43]
+  DO:
+005776    0     4f unit_op_4f 0 115 -1 -1 1 0
+005790    1     4f unit_op_4f 115 0 -1 -1 0 1
+0057aa    2     14 dialog "&王经\n我今天误中你的计谋，遭此大败实在是无\n话可说。\n&姜维\n你的用兵不算差劲，也能掌握将士的心，\n不然在这种混乱的情况下早就全军崩溃。\n&王经\n就是因为这样，我的部队现在被你们蜀人\n残杀不少，要是他们机伶点，也就不会死\n伤这么惨重了。\n&姜维\n若是你能多累积经验，说不定成就不在\n伯济或是玄伯之下。\n&王经\n你认为我还会有机会？本来我怀抱着升官\n让母亲荣耀的梦想，现在全都没了。\n&姜维\n让母亲荣耀？原来…你也和我抱持着同样\n的想法…\n&姜维\n如果不是处于两边阵营的话，我应该会和\n你成为好朋友。\n&王经\n或许吧，只能感叹命运的作弄。"
+0059aa    3     0b set_flag 43 1
+0059b6    4     }
+
+-- section 1.14 @59b8
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 11 115 1
+  WHEN 05 test_flags [307] [46]
+  DO:
+0059e7    0     4f unit_op_4f 11 115 -1 -1 1 0
+005a01    1     4f unit_op_4f 115 11 -1 -1 0 1
+005a1b    2     14 dialog "&刘敏\n你就是王经？\n&王经\n大魏雍州刺史王经正是在下。\n&刘敏\n我曾经听闻阁下出身农家，却能靠着自己\n的努力，一口气成为和许允并称的名士。\n堪称是河北名士的代表。\n&王经\n不敢当，想不到蜀国也有人知道在下的\n微薄名声。\n&刘敏\n正所谓名门不一定会出名士，而名士也不\n一定出自名门，名声和门第没有一定的关\n联…\n&王经\n（妈呀，真的好啰嗦。）\n&刘敏\n总而言之，我的新武器用你来测试应该是\n再适合不过的。\n&王经\n喔…那还真是荣幸…等一下…你说什么？"
+005bc5    3     50 unit_status 11 6 1 0
+005bd7    4     50 unit_status 115 3 0 0
+005be9    5     23 play_music 35 1
+005bf5    6     09 delay 5
+005bfd    7     50 unit_status 115 9 0 1
+005c0f    8     4d unit_op_4d 0 115 0 0 0 0 0 6 -1 -1 16 100 0
+005c53    9     14 dialog "&王经\n好卑鄙呀！怎么全身无力，你到底用了\n什么？\n&刘敏\n哦…这效果还真好，丞相夫人果然是奇\n才呀！刘敏真是佩服得五体投地。"
+005ccf   10     3d get_item 41 0 1 11
+005ce1   11     0b set_flag 46 1
+005ced   12     }
+
+-- section 1.15 @5cef
+  WHEN 02 comment "驹い矪竚"
+  WHEN 2e test_adjacent 0 7 1
+  WHEN 05 test_flags [] [44]
+  DO:
+005d1c    0     4f unit_op_4f 0 7 -1 -1 1 0
+005d36    1     4f unit_op_4f 7 0 -1 -1 1 0
+005d50    2     14 dialog "&姜维\n仲权，这样和魏国战斗没问题吗？\n&夏侯霸\n你当时和我交战的时候不也经过那样的阵\n痛期，现在我也一样。\n&夏侯霸\n虽然说我不能抛弃自己夏侯家的身分，但\n至少让我为这个国家尽点力也好。"
+005e07    3     0b set_flag 44 1
+005e13    4     }
+
+-- section 1.16 @5e15
+  WHEN 02 comment "驹い矪竚"
+  WHEN 3f test_turn 4 0
+  WHEN 2e test_adjacent 0 9 1
+  WHEN 05 test_flags [] [45]
+  DO:
+005e4e    0     4f unit_op_4f 0 9 -1 -1 1 0
+005e68    1     4f unit_op_4f 9 0 -1 -1 1 0
+005e82    2     14 dialog "&姜维\n显通，这次作战如果没有你，恐怕也没有\n现在的胜利。\n&袁綝\n没必要谢我，这比起义父当年做的，根本\n就微不足道。\n&姜维\n显通有如此杰出的义父作为目标，在下\n其实真的很羡慕。\n&袁綝\n是吗？我觉得你也是幸福之人，不过你\n好像没什么自觉。\n&姜维\n为什么呢？\n&袁綝\n当我没说过吧。"
+005f90    3     0b set_flag 45 1
+005f9c    4     }
+
+-- section 1.17 @5f9e
+  WHEN 02 comment ""
+  WHEN 36 test_attr 9 7 0 2
+  WHEN 05 test_flags [] [68]
+  DO:
+005fc9    0     53 unit_op_53 0 9 0 0 0 0 6 1
+005ff3    1     49 ui_49 
+005ff5    2     0e ui_0e 
+005ff7    3     0b set_flag 68 1
+006003    4     0d next_scene 
+006005    5     }
+
+-- section 1.18 @6007
+  WHEN 02 comment ""
+  WHEN 36 test_attr 115 7 0 2
+  WHEN 05 test_flags [] [226]
+  DO:
+006032    0     50 unit_status 115 9 0 1
+006044    1     14 dialog "&王经\n一口气损失了好几万人，现在只能收拾\n残兵回去狄道固守了。\n&王经\n（万一关中部队没有来支援，我绝对是\n死定了，只能祈祷征西将军不要决定把\n我舍弃。）"
+0060dd    2     31 actor_select 0 115 0 0 0 0 0
+006103    3     0b set_flag 226 1
+00610f    4     }
+
+-- section 1.19 @6111
+  WHEN 02 comment ""
+  WHEN 36 test_attr 121 7 0 2
+  WHEN 05 test_flags [] [250]
+  DO:
+00613c    0     14 dialog "&郑伦\n我的大斧要饿肚子了。"
+00615b    1     31 actor_select 0 121 0 0 0 0 0
+006181    2     0b set_flag 250 1
+00618d    3     }
+
+-- section 1.20 @618f
+  WHEN 02 comment ""
+  WHEN 36 test_attr 237 7 0 2
+  WHEN 05 test_flags [] [249]
+  DO:
+0061ba    0     14 dialog "&朱芳\n我不叫朱茵，也不叫朱头皮，我叫朱芳！"
+0061e9    1     53 unit_op_53 0 237 0 0 0 0 6 1
+006213    2     0b set_flag 249 1
+00621f    3     }
+
+-- section 1.21 @6221
+  WHEN 02 comment ""
+  WHEN 36 test_attr 236 7 0 2
+  WHEN 05 test_flags [] [248]
+  DO:
+00624c    0     14 dialog "&刘达\n我刘三刀居然会死在这里？！"
+006271    1     53 unit_op_53 0 236 0 0 0 0 6 1
+00629b    2     0b set_flag 248 1
+0062a7    3     }
+
+-- section 1.22 @62a9
+  WHEN 02 comment ""
+  WHEN 36 test_attr 7 7 0 2
+  WHEN 05 test_flags [] [238]
+  DO:
+0062d4    0     14 dialog "&夏侯霸\n司马贼人！总有一天要你们付出代价！"
+006303    1     31 actor_select 0 7 0 0 0 0 0
+006329    2     0b set_flag 238 1
+006335    3     }
+
+-- section 1.23 @6337
+  WHEN 02 comment ""
+  WHEN 36 test_attr 4 7 0 2
+  WHEN 05 test_flags [] [137]
+  DO:
+006362    0     14 dialog "&句扶\n纵然战败，其心不败。"
+006381    1     31 actor_select 0 4 0 0 0 0 0
+0063a7    2     0b set_flag 137 1
+0063b3    3     }
+
+-- section 1.24 @63b5
+  WHEN 02 comment ""
+  WHEN 36 test_attr 5 7 0 2
+  WHEN 05 test_flags [] [139]
+  DO:
+0063e0    0     14 dialog "&宁随\n我越来越懂得生存的意义了。"
+006405    1     31 actor_select 0 5 0 0 0 0 0
+00642b    2     0b set_flag 139 1
+006437    3     }
+
+-- section 1.25 @6439
+  WHEN 02 comment ""
+  WHEN 36 test_attr 17 7 0 2
+  WHEN 05 test_flags [] [74]
+  DO:
+006464    0     14 dialog "&廖化\n难道我廖化真的不能作先锋？"
+006489    1     31 actor_select 0 17 0 0 0 0 6
+0064af    2     0b set_flag 74 1
+0064bb    3     }
+
+-- section 1.26 @64bd
+  WHEN 02 comment ""
+  WHEN 36 test_attr 10 7 0 2
+  WHEN 05 test_flags [] [78]
+  DO:
+0064e8    0     14 dialog "&向充\n看来我努力得还不够，得向老师多学习。"
+006517    1     31 actor_select 0 10 0 0 0 0 0
+00653d    2     0b set_flag 78 1
+006549    3     }
+
+-- section 1.27 @654b
+  WHEN 02 comment ""
+  WHEN 36 test_attr 8 7 0 2
+  WHEN 05 test_flags [] [75]
+  DO:
+006576    0     14 dialog "&来忠\n外面的战场固然可怕，但是内部的战场更\n是可怕…"
+0065ae    1     31 actor_select 0 8 0 0 0 0 6
+0065d4    2     0b set_flag 75 1
+0065e0    3     }
+
+-- section 1.28 @65e2
+  WHEN 02 comment ""
+  WHEN 36 test_attr 11 7 0 2
+  WHEN 05 test_flags [] [230]
+  DO:
+00660d    0     14 dialog "&刘敏\n所谓的战败有分很多种，有谓先胜后败，\n也有先败后胜，也有胜败交错，也有不胜\n不败…（继续啰唆）"
+006674    1     31 actor_select 0 11 0 0 0 0 0
+00669a    2     0b set_flag 230 1
+0066a6    3     }
+
+-- section 1.29 @66a8
+  WHEN 02 comment ""
+  WHEN 36 test_attr 13 7 0 2
+  WHEN 05 test_flags [] [72]
+  DO:
+0066d3    0     14 dialog "&霍弋\n这个时候要忍住，不要吐槽自己。"
+0066fc    1     31 actor_select 0 13 0 0 0 0 6
+006722    2     0b set_flag 72 1
+00672e    3     }
+
+-- section 1.30 @6730
+  WHEN 02 comment ""
+  WHEN 36 test_attr 12 7 0 2
+  WHEN 05 test_flags [] [79]
+  DO:
+00675b    0     14 dialog "&宗预\n果然我还是不适合在前线冲锋。"
+006782    1     31 actor_select 0 12 0 0 0 0 0
+0067a8    2     0b set_flag 79 1
+0067b4    3     }
+
+-- section 1.31 @67b6
+  WHEN 02 comment ""
+  WHEN 36 test_attr 18 7 0 2
+  WHEN 05 test_flags [] [152]
+  DO:
+0067e1    0     14 dialog "&赵统\n我还是及不上父亲的一半。"
+006804    1     31 actor_select 0 18 0 0 0 0 0
+00682a    2     0b set_flag 152 1
+006836    3     }
+
+-- section 1.32 @6838
+  WHEN 02 comment ""
+  WHEN 36 test_attr 1 7 0 2
+  WHEN 05 test_flags [] [50]
+  DO:
+006863    0     50 unit_status 1 9 0 1
+006875    1     14 dialog "&诸葛果\n咳咳咳……\n&姜维\n诸葛果，别再勉强自己了。\n&诸葛果\n是…"
+0068b8    2     31 actor_select 0 1 0 0 0 0 0
+0068de    3     0b set_flag 50 1
+0068ea    4     }
+
+-- section 1.33 @68ec
+  WHEN 02 comment ""
+  WHEN 36 test_attr 19 7 0 2
+  WHEN 05 test_flags [] [153]
+  DO:
+006917    0     14 dialog "&赵广\n看来走自己的路也不太容易。"
+00693c    1     31 actor_select 0 19 0 0 0 0 0
+006962    2     0b set_flag 153 1
+00696e    3     }
+
+-- section 1.34 @6970
+  WHEN 02 comment ""
+  WHEN 36 test_attr 16 7 0 2
+  WHEN 05 test_flags [] [71]
+  DO:
+00699b    0     14 dialog "&关索\n………"
+0069ac    1     31 actor_select 0 16 0 0 0 0 6
+0069d2    2     0b set_flag 71 1
+0069de    3     }
+
+-- section 1.35 @69e0
+  WHEN 02 comment ""
+  WHEN 36 test_attr 20 7 0 2
+  WHEN 05 test_flags [] [202]
+  DO:
+006a0b    0     14 dialog "&花鬘\n我可不是因为帮你才弄到撤退的啦。"
+006a36    1     31 actor_select 0 20 0 0 0 0 6
+006a5c    2     0b set_flag 202 1
+006a68    3     }
+
+-- section 1.36 @6a6a
+  WHEN 02 comment ""
+  WHEN 36 test_attr 15 7 0 2
+  WHEN 05 test_flags [] [73]
+  DO:
+006a95    0     14 dialog "&张翼\n居然战败了？真是不可思议。"
+006aba    1     31 actor_select 0 15 0 0 0 0 6
+006ae0    2     0b set_flag 73 1
+006aec    3     }
+
+-- section 1.37 @6aee
+  WHEN 02 comment "驹い矪竚"
+  WHEN 36 test_attr 3 7 0 2
+  WHEN 05 test_flags [] [136]
+  DO:
+006b21    0     14 dialog "&柳隐\n败战乃兵家常事。"
+006b3c    1     31 actor_select 0 3 0 0 0 0 0
+006b62    2     0b set_flag 136 1
+006b6e    3     }
+
+-- section 1.38 @6b70
+  WHEN 02 comment ""
+  WHEN 36 test_attr 22 7 0 2
+  WHEN 05 test_flags [] [70]
+  DO:
+006b9b    0     14 dialog "&张嶷\n一时的败退不要气馁，再战就好。"
+006bc4    1     31 actor_select 0 22 0 0 0 0 6
+006bea    2     0b set_flag 70 1
+006bf6    3     }
+
+-- section 1.39 @6bf8
+  WHEN 02 comment ""
+  WHEN 41 test_units_in_area 2 0 2 0 0 0 0 0
+  WHEN 05 test_flags [2] [3]
+  DO:
+006c3d    0     51 op_51 
+006c3f    1     14 dialog "&姜维\n这场战斗我们一口气歼灭敌人超过数万\n军队，实在可以说是难得的大胜利。\n&夏侯霸\n伯约，王经和他的残兵似乎已经逃入\n狄道城。\n&袁綝\n要追击？\n&姜维\n当然，趁现在拿下狄道城，这样曹贼就会\n完全失去对陇西地方的控制力。\n&诸葛果\n主公…咳咳咳咳咳…"
+006d31    2     50 unit_status 1 9 0 1
+006d43    3     14 dialog "&姜维\n诸葛果……"
+006d58    4     IF 05 test_flags [40,41,42] []   {len=52, skip->#8}
+006d6c    5       14 dialog "达成印绶条件\n触发所有单挑。"
+006d8c    6       3d get_item 97 0 1 0
+006d9e    7       }
+006da0    8     59 op_59 1500 -1 -1 -1 -1 -1 -1 -1
+006dc4    9     49 ui_49 
+006dc6   10     0b set_flag 3 1
+006dd2   11     0d next_scene 
+006dd4   12     }
+
+-- section 1.40 @6dd6
+  WHEN 02 comment "驹い矪竚"
+  WHEN 43 test_event6 
+  WHEN 05 test_flags [] [1]
+  DO:
+006df7    0     16 info "姜维败给了王经的部队。"
+006e12    1     49 ui_49 
+006e14    2     0e ui_0e 
+006e16    3     0b set_flag 1 1
+006e22    4     0d next_scene 
+006e24    5     }
+
+==============================================================================
+SCENE 2  @6e26  sections=1
+
+-- section 2.0 @6e28
+  WHEN 02 comment "驹�岢B竚"
+  DO:
+006e3b    0     24 play_sound 255
+006e41    1     08 set_result 0
+006e47    2     1d fade_in 
+006e49    3     }

@@ -1,0 +1,127 @@
+[
+ {
+  "id": 23,
+  "name": "破甲无反",
+  "ok": false
+ },
+ {
+  "id": 26,
+  "name": "辅助精神力",
+  "ok": false
+ },
+ {
+  "id": 27,
+  "name": "辅助爆发力",
+  "ok": false
+ },
+ {
+  "id": 29,
+  "name": "辅助HP",
+  "ok": false
+ },
+ {
+  "id": 30,
+  "name": "MP防御",
+  "ok": false
+ },
+ {
+  "id": 31,
+  "name": "辅助获得Exp",
+  "ok": false
+ },
+ {
+  "id": 32,
+  "name": "辅助移动力",
+  "ok": false
+ },
+ {
+  "id": 33,
+  "name": "先手攻击",
+  "ok": true
+ },
+ {
+  "id": 34,
+  "name": "恶路移动",
+  "ok": false
+ },
+ {
+  "id": 35,
+  "name": "远攻混乱",
+  "ok": true
+ },
+ {
+  "id": 38,
+  "name": "禁咒破智",
+  "ok": true
+ },
+ {
+  "id": 41,
+  "name": "致命一击攻击",
+  "ok": true
+ },
+ {
+  "id": 43,
+  "name": "穿透攻击",
+  "ok": false
+ },
+ {
+  "id": 45,
+  "name": "加强伤害",
+  "ok": true
+ },
+ {
+  "id": 46,
+  "name": "引导攻击",
+  "ok": true
+ },
+ {
+  "id": 48,
+  "name": "辅助四系策略",
+  "ok": true
+ },
+ {
+  "id": 49,
+  "name": "节约MP",
+  "ok": false
+ },
+ {
+  "id": 51,
+  "name": "策略模仿",
+  "ok": false
+ },
+ {
+  "id": 52,
+  "name": "辅助策略命中",
+  "ok": true
+ },
+ {
+  "id": 53,
+  "name": "辅助攻击防御",
+  "ok": true
+ },
+ {
+  "id": 54,
+  "name": "辅助策略防御",
+  "ok": true
+ },
+ {
+  "id": 55,
+  "name": "辅助全防御",
+  "ok": true
+ },
+ {
+  "id": 56,
+  "name": "防御远距攻击",
+  "ok": true
+ },
+ {
+  "id": 57,
+  "name": "防御特殊攻击",
+  "ok": true
+ },
+ {
+  "id": 61,
+  "name": "减轻远距损伤",
+  "ok": true
+ }
+]
