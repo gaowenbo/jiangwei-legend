@@ -17,7 +17,7 @@ const GAME_DATA_JSON = path.join(__dirname, "game_data.json");
 
 // 模块加载顺序（依赖关系）
 // 注：JW_FACES 由 assets_data.js 提供（旧 faces_data.js 不再注入，避免覆盖）
-const JS_ORDER = ["data.js", "shops_data.js", "battle_events_data.js", "real.js", "rules.js", "assets_data.js", "chars_adapter.js", "battle_scene.js", "engine.js", "story.js", "ui.js", "main.js"];
+const JS_ORDER = ["data.js", "shops_data.js", "battle_events_data.js", "battle_events_v2.js", "real.js", "rules.js", "assets_data.js", "chars_adapter.js", "battle_scene.js", "engine.js", "story.js", "ui.js", "main.js"];
 
 // Phaser 3（渲染引擎，离线内联）
 const PHASER_JS = path.join(__dirname, "node_modules", "phaser", "dist", "phaser.min.js");

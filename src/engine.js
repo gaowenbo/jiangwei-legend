@@ -24,15 +24,24 @@
     21: { 6: [3, 2] }                                    // 战车 → 格斗兵 ×3/4
   };
 
-  // ---------- 策略伤害 power 表（table 0x43c35c，1:1 逆向；键为策略 id） ----------
+  // ---------- 策略伤害 power 表（table 0x43c31e，1:1 逆向；键为策略 id，取自 EXE 实测） ----------
+  // 73 项，索引 0..72，超出按 0 处理（不伤害）
   const STRAT_POWER = {
-    0: 75, 1: 90, 2: 50, 3: 70, 4: 100,   // 火系
-    5: 75, 6: 90, 7: 50, 8: 70, 9: 100,   // 水系
-    10: 50, 11: 75, 12: 40, 13: 60, 14: 20, // 风系
-    15: 70, 16: 100, 17: 60, 18: 90, 19: 120, // 地系
-    20: 70, 22: 20, 33: 70, 34: 50, 35: 60, 36: 40,
-    38: 120, 64: 70, 65: 100
+    0: 70, 1: 90, 2: 50, 3: 70, 4: 90,   // 火系
+    5: 70, 6: 90, 7: 50, 8: 70, 9: 28,   // 水系
+    10: 50, 11: 70, 12: 40, 13: 50, 14: 20, // 风系
+    15: 70, 16: 90, 17: 70, 18: 90, 19: 120, // 地系
+    20: 70, 22: 28, 33: 50, 34: 28, 35: 28, 36: 28,
+    38: 28, 64: 70, 65: 100, 66: 28, 67: 28, 68: 28,
+    // 其余为 0（无伤害策略）
   };
+  // 兵种修正表 0x4d21b0[40]，按目标兵种 id 索引，100=无修正
+  const STRAT_CLASS_MOD = [
+    90, 100, 100, 100, 100, 100, 100, 100, 90, 90,
+    90, 90, 90, 110, 120, 120, 100, 120, 100, 100,
+    90, 100, 100, 90, 100, 100, 90, 130, 100, 150,
+    130, 130, 130, 90, 130, 130, 90, 100, 100, 100
+  ];
 
   // ---------- 策略命中系数表（table 0x43bc07→0x43bb6b，1:1 逆向；[n,d]=×n/d，"auto"=固定100） ----------
   const STRAT_HIT = {
@@ -732,11 +741,12 @@
       }
       return 0;
     }
-    /* 策略列表（1:1 0x465a40）：本兵种已学；带 51 策略模仿 时，另加
-     * 施法者【上下左右 4 格】任意阵营单位已学的策略（按原版策略 id 排序）。 */
+    /* 策略列表：本兵种已学；带「策略模仿」（兵法二十四篇 type=108）时，另加
+     * 施法者【上下左右 4 格】任意阵营单位已学的策略（按原版策略 id 排序）。
+     * 注：旧实现误用 hasEffect(51)，但 51 实测为「致命一击」（会心必定），已改为 108。 */
     availableSkills(battle) {
       const ids = new Set((this.unitDef && this.unitDef.realSkillIds) || []);
-      if (this.hasEffect && this.hasEffect(51) && battle) {
+      if (this.hasEffect && this.hasEffect(108) && battle) {
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
           const o = battle.unitAt ? battle.unitAt(this.x + dx, this.y + dy) : null;
           if (o && o.isAlive && o.unitDef && o.unitDef.realSkillIds) {
@@ -866,6 +876,28 @@
       this.state = "playing";
       this.turnQueue = [];
       this.onEvent = null; // 回调: (evt) => {}
+      /* 兵种出手计数表（DAT_00508ec5，2026-11-04 实证）：FUN_00405de1 每攻击段尾部
+       * 对目标兵种计数 +1（0xff 饱和、初始全 0）；FUN_00478f08 用它计算效果 107 追伤。 */
+      this._clsAtkCount = {};
+    }
+
+    /* FUN_00405de1 尾段：目标兵种出手计数 +1（*pc != -1 时 ++，字节饱和 254） */
+    _bumpClsAtkCount(clsId) {
+      const k = clsId & 0xff;
+      const cur = this._clsAtkCount[k] || 0;
+      if (cur !== 0xff) this._clsAtkCount[k] = cur + 1;
+    }
+
+    /* FUN_00478f08（追伤，2026-11-04 实证）：攻击者持 FUN_004cf398(u,0x2c,0x6b,1,0)
+     * → key=0x6b(107) 黄龙升天刀（sval=10）→ dmg += dmg × v107 × 计数表[目标兵种] / 100。
+     * 仅普通攻击（param_3==0）时由 FUN_0043bc62 调用；反击/特殊攻击不追加。 */
+    _chargeFollowupDmg(attacker, defender, dmg) {
+      if (!attacker.hasEffect || !attacker.hasEffect(107)) return 0;
+      const v = attacker.effectValue(107);
+      if (!v) return 0;
+      const cnt = this._clsAtkCount[defender.clsId & 0xff] || 0;
+      if (!cnt) return 0;
+      return Math.floor(dmg * (v * cnt) / 100);
     }
 
     init() {
@@ -885,6 +917,11 @@
       this.loadBattleEvents(cfg);
       // 原版战斗脚本事件层
       this.script = (window.JW_BATTLE_EVENTS || {})[cfg.src] || null;
+      // EEX 结构化剧情层（1:1 §4 模型）： scenes[sections{conds,body}]，见 pollEexEvents
+      this._eexFile = cfg.src || null;
+      this._eexScene = 0;
+      this._eexNext = false;
+      this._lastIf = 1;
       this._scriptDone = new Set();
       this._scriptFlags = {};
       this.forceWin = null;
@@ -1017,11 +1054,12 @@
     // 状态位 0x20（绝招中）→ 码 11 不能攻击（原版 0x43f8be）
     rangeCodeOf(unit) {
       if (unit.status && unit.status.blockAttack) return 11;
-      /* 射程形状覆盖（0x43f8e8/0x43f868 反汇编实测）：
+      /* 注：0x43f7c3 为地形防御系数函数（浅滩9/沼泽10→11、雪原7/大河13→12 为其防御值），
+       * 并非射程逻辑——射程不受地形影响。 */
+      /* 射程形状覆盖（0x43f8e8 反汇编实测）：
        *   42 远距攻击 → 形状码 10（全图，且最小射程设 1）
        *   43 → 形状码 6（曼哈顿 1..2）
-       *   44 → 形状码 12（曼哈顿 1..3）
-       * 原版还有效果 50 的覆盖（返回 100，语义未定），不猜、跳过。 */
+       *   44 → 形状码 12（曼哈顿 1..3） */
       if (unit.hasEffect) {
         if (unit.hasEffect(42)) return 10;
         if (unit.hasEffect(43)) return 6;
@@ -1102,61 +1140,63 @@
       return it && it.special != null ? it : null;
     }
     /* noRandom=true 时按随机项中值(3)计算，供 UI 预览使用，不消耗随机数 */
+    /* 物理伤害：1:1 原版 FUN_0043bc62（0x43bc62）实测链：
+     *   ① 攻/防 = stat0/stat1 × 地形系数(t/10)（FUN_0043f7c3）
+     *   ② dmg = 等级 + 25；A<D → dmg−(D−A)/2（0→1）；A≥D → +(A−D)/2
+     *   ③ 兵种相克表 0x4d1a80[攻兵种*40+防兵种] ≠100 → dmg×v/100
+     *   ④ 0x4d2138[攻兵种]=1 且攻方持 special==69（FUN_004cf398(u,0x22,0x45,1,0)）→ 追伤
+     *      —— 本 mod 无物品携带 special=69（死码，2026-11-04 key 判据修正，旧值 34 飞景系误绑）
+     *   ⑤ 非普通攻击(mode≠0) → dmg×3/4（special==106 免除），下限 1
+     *   ⑥ 随机 rand(7)：r<3 → dmg−r(0→1)；r≥3 → dmg+r−2
+     *   ⑦ 追伤（FUN_00478f08，仅普通攻击 mode==0）：攻方持 special==107（黄龙升天刀）→
+     *      dmg += dmg × v107 × 兵种出手计数表[目标兵种] / 100
+     *   ⑧ 上限=目标HP（调用处）。
+     * 注：效果21/22 蓄力倍率路径（FUN_004cf398(u,0x16,0x1f) → key=0x1f(31) 青釭剑 →
+     * dmg×U+0x1c/100）已实证；U+0x1c 的维护点未定位（本 mod 无蓄力指令），按 100 计不移植。 */
     physicalDamage(attacker, defender, mode, noRandom) {
+      const R = window.JW_REAL;
+      /* 青釭剑（FUN_0043bc62 实证 2026-11-04）：攻击者持 special==31
+       * （FUN_004cf398(u,0x16,0x1f,1,0) → key=0x1f(31)）→ 伤害 = v31 固定值
+       * （sp31 特例缩放 0x420119：sval×(武器等级+1)，青釭剑 sval=20 → lv1=40 … lv9=200），
+       * 且跳过全部攻防/兵种/相克/装备修正；反击 ×3/4 段亦被绕过（不减）。
+       * DAT_0046230e=1（静态实证）→ MaxMP 蓄力倍率段不生效；类别 0x15 攻击（DAT_00500e9b）
+       * 走同段但指令未定论，不移植。 FUN_00406b0e 仅 param_2==0（AI 预估）触发，真实攻击不经过。 */
+      if (attacker.hasEffect && attacker.hasEffect(31)) {
+        return Math.max(attacker.effectValue(31) || 0, 1);
+      }
       const tA = this.terrainEffect(attacker, attacker.x, attacker.y);
       const tD = this.terrainEffect(defender, defender.x, defender.y);
       const A = Math.floor((attacker.bAtk != null ? attacker.bAtk : attacker.atk) * tA / 10);
       const D = Math.floor((defender.bDef != null ? defender.bDef : defender.def) * tD / 10);
-      let dmg = (attacker.lvl || 1) + 35;
-      /* 85 固定伤害：伤害直接取效果值（§4.1） */
-      if (attacker.hasEffect && attacker.hasEffect(85)) {
-        const fixed = attacker.effectValue(85);
-        if (fixed > 0) dmg = fixed;
-      }
-      // 武器伤害加成：special 31/34/35/36/39/43 → dmg + sval%（青釭/飞景/白羽/三尖/流星锤等攻击特效）
-      const wspec = this.weaponSpec(attacker.weapon);
-      if (wspec && [31, 34, 35, 36, 39, 43].includes(wspec.special)) dmg = Math.floor(dmg * (100 + (wspec.sval || 0)) / 100);
+      let dmg = (attacker.lvl || 1) + 0x19;
       if (A >= D) dmg += (A - D) >> 1;
-      else dmg = Math.max(dmg - ((D - A) >> 1), 1);
-      // 兵种相克
+      else { dmg = Math.max(dmg - ((D - A) >> 1), 0); if (dmg === 0) dmg = 1; }
+      // ③ 兵种相克（0x4d1a80 乘法表）
       dmg = this.classMatchup(attacker, defender, dmg);
-      // 远距攻击 && 防守方 减轻远距损伤(61 护背旗/护心镜)：dmg -= dmg*val/100
-      const RANGED_FAM = new Set([4, 5, 15, 23]);
-      if (RANGED_FAM.has(attacker.fam) && defender.hasEffect && defender.hasEffect(61)) {
-        dmg = Math.floor(dmg * (100 - defender.effectValue(61)) / 100);
+      // ④ 0x4d2138 兵种标记 + special==69（本 mod 无物品携带，死码对齐；旧误绑 34 飞景系）
+      if (R && R.CRIT_CLS && (attacker.clsId || 0) < R.CRIT_CLS.length
+          && R.CRIT_CLS[attacker.clsId || 0] && attacker.hasEffect && attacker.hasEffect(69)) {
+        dmg += Math.floor(dmg * attacker.effectValue(69) / 100);
       }
-      // 骑兵目标 & 攻击者 骑兵攻击(45)；步兵目标 & 步兵攻击(88)
-      const MOV_TABLE = [0, 2, 2, 0, 0, 0, 2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 0x43f4ac[def_family]
-      const dmv = MOV_TABLE[defender.fam] !== undefined ? MOV_TABLE[defender.fam] : -1;
-      if (dmv === 0 && attacker.hasEffect && attacker.hasEffect(45)) dmg = Math.floor(dmg * (100 + attacker.effectValue(45)) / 100);
-      if (dmv === 2 && attacker.hasEffect && attacker.hasEffect(88)) dmg = Math.floor(dmg * (100 + attacker.effectValue(88)) / 100);
-      /* 冲锋攻击（§12.4 0x4d8d95）：d = max(|dx|,|dy|) 移动起点→当前，重复 d 次 dmg×110/100 */
-      if (attacker.hasEffect && attacker.hasEffect(89) && attacker._moveStartX != null) {
-        const d = Math.max(Math.abs(attacker.x - attacker._moveStartX), Math.abs(attacker.y - attacker._moveStartY));
-        for (let i = 0; i < d; i++) dmg = Math.floor(dmg * 110 / 100);
-      }
-      if (mode === 0) dmg = Math.floor(dmg * 10 / 10);
-      else {
-        if (mode !== 2) dmg = (dmg * 3) >> 2;   // 反击
+      // ⑤ 非普通攻击 ×3/4（special==106 免除）
+      if (mode !== 0) {
+        if (!(attacker.hasEffect && attacker.hasEffect(106))) dmg = (dmg * 3) >> 2;   // key=0x6a(106)，本 mod 无物品携带（死码对齐）
         dmg = Math.max(dmg, 1);
-        if (mode !== 1) dmg = Math.max(dmg >> 1, 1); // 溅射/穿透次要目标
       }
-      /* 智将（§12.4 0x4dc9e0 CalcDamage post）：pid 19 → 伤害 + 精神×15/100，
-       * 且封顶自身 HP（打不死人但也不超发）。舍命分支（槽 10 持有者）依赖
-       * 部署槽位标记，本作数据未出现，跳过。 */
-      if (attacker.pid === 19) {
-        const mg = attacker.bMag != null ? attacker.bMag : attacker.mag;
-        dmg = Math.min(Math.floor(mg * 15 / 100) + dmg, Math.max(0, attacker.hp));
+      else {
+        // ⑦ 追伤（FUN_00478f08 实证，仅普通攻击）：攻方 special==107 黄龙升天刀
+        dmg += this._chargeFollowupDmg(attacker, defender, dmg);
       }
-      if (noRandom) return Math.max(1, dmg);     // 预览：返回未加随机项的基础值
-      const r = U.rnd(0, 6);                     // rand(7)：r>2 → +r-2 (0..+4)，r≤2 → -r (0..-2)
-      dmg = r > 2 ? dmg + r - 2 : Math.max(dmg - r, 1);
+      if (noRandom) return Math.max(1, dmg);
+      const r = U.rnd(0, 6);                     // rand(7)：r>2 → +r-2，r≤2 → -r(0→1)
+      dmg = r > 2 ? dmg + r - 2 : Math.max(dmg - r, 0);
       return Math.max(1, dmg);
     }
     hitRate(attacker, defender) {
       // 远距攻击 && 防守方 防御远距攻击(56)：0
-      const RANGED_FAM = new Set([4, 5, 15, 23]);
-      if (RANGED_FAM.has(attacker.fam) && defender.hasEffect && defender.hasEffect(56)) return 0;
+      /* 2026-11-04 删除「防御远距攻击(56) → 命中 0」：出自名表 56 推断（第 26 轮批次），
+       * EXE 中无 key=0x38 的命中类查询；special=56（破凰凤羽扇）的实证行为是
+       * 策略伤害加成（FUN_0043c00f → FUN_004cf398(u,0x28,0x38,1,0)），不再免疫远程。 */
       // 混乱目标必中
       if (defender.status && defender.status.confused) return 100;
       const a = attacker.bSpd != null ? attacker.bSpd : attacker.spd, d = defender.bSpd != null ? defender.bSpd : defender.spd;
@@ -1165,13 +1205,14 @@
       else if (a >= d) h = Math.floor((a - d) * 10 / d) + 90;
       else if (a >= (d >> 1)) h = Math.floor((a - (d >> 1)) * 30 / (d >> 1)) + 60;
       else { const half = Math.floor(d / 3); h = half > 0 ? Math.floor(Math.max(0, a - half) * 30 / half) + 30 : 30; }
-      // 效果修正：39 辅助攻击命中；53 辅助攻击防御；55 辅助全防御
-      if (attacker.hasEffect && attacker.hasEffect(39)) h = Math.min(h + attacker.effectValue(39), 100);
-      if (defender.hasEffect && defender.hasEffect(53)) h = Math.max(h - defender.effectValue(53), 0);
-      if (defender.hasEffect && defender.hasEffect(55)) h = Math.max(h - defender.effectValue(55), 0);
-      // 武器命中特效：special 51 养叔穿杨弓 → 命中 + sval×5（推断：sval=4 → +20）
-      const wspecH = this.weaponSpec(attacker.weapon);
-      if (wspecH && wspecH.special === 51) h += (wspecH.sval || 0) * 5;
+      /* 效果修正（1:1 原版 FUN_0043b50c 尾段：FUN_0047fa89=min(h+v,cap)、FUN_0047fa9e=max(h−v,0)。
+       * 2026-11-04 key 判据修正——判据取 FUN_004cf398 第 2 参（special）：
+       *   - (0x1e, 0x23)：special==35 飞景/鹤氅 → 必中 100（旧绑 30 乾象历注为 id 误读）
+       *   - (0x1f, 0x2f)：special==47 → 命中 +v（本 mod 无物品，死码对齐）
+       *   - (0x20, 0x3d)：special==61 → 命中 −v（无物品，死码对齐） */
+      if (attacker.hasEffect && attacker.hasEffect(35)) return 100;
+      if (attacker.hasEffect && attacker.hasEffect(47)) h = Math.min(h + attacker.effectValue(47), 100);
+      if (attacker.hasEffect && attacker.hasEffect(61)) h = Math.max(h - attacker.effectValue(61), 0);
       return U.clamp(h, 0, 100);
     }
     // 策略命中：1:1 原版 StratHitRate 0x43b73f（精神+士气，4 段曲线 × 每策略系数）
@@ -1179,6 +1220,9 @@
       const sid = skill.realId != null ? skill.realId : skill.id;
       // 混乱目标必中
       if (target.status && target.status.confused) return 100;
+      /* 策略必中（FUN_004cf398(u,0x1b,0x37,1,1)）：key=0x37(55) 琉璃七宝刀 → return 100。
+       * 旧绑 27 八卦仙衣为 id 误读——special==27 无任何 key=0x1b 查询点（2026-11-04 修正）。 */
+      if (caster.hasEffect && caster.hasEffect(55)) return 100;
       /* 杜断（0x4d4abc）：施法者相邻有 pid 185 同阵营 → 命中曲线 +20（≤100） */
       const duDuan = this.units.some(o => o.isAlive && o.pid === 185 && o.faction === caster.faction
         && Math.abs(o.x - caster.x) + Math.abs(o.y - caster.y) === 1);
@@ -1189,91 +1233,108 @@
       else if (A >= B) h = Math.floor((A - B) * 10 / B) + 90;
       else if (A >= (B >> 1)) h = Math.floor((A - (B >> 1)) * 30 / (B >> 1)) + 60;
       else { const third = Math.floor(B / 3); h = third > 0 ? Math.floor(Math.max(0, A - third) * 30 / third) + 30 : 30; }
-      // 每策略系数（table 0x43bb6b → 0x43bc07）
-      const FACT = STRAT_HIT[sid];
-      if (FACT) {
-        if (FACT === "auto") h = 100;
-        else if (FACT === "狂澜") {
-          // 对单位0（战场首个敌方）或敌主将：0；否则 ×1/3
-          const isFirst = target && target.id === 0;
-          const isCommander = target && target.leader === true;
-          h = (isFirst || isCommander) ? 0 : Math.floor(h / 3);
-        }
-        else h = Math.floor(h * FACT[0] / FACT[1]);
+      /* 每策略命中系数：0x43ba07[73] 原始字节实测（FUN_0043b6f3 switch）——
+       *   ≥5 → 命中×byte/100；1 / 100 → 必中100；0 → ×90/100；2/3/4 → 条件型不乘 */
+      const cat = (window.JW_REAL && window.JW_REAL.STRAT_HIT_CAT) ? window.JW_REAL.STRAT_HIT_CAT[sid] : null;
+      if (cat != null) {
+        if (cat === 1 || cat === 100) h = 100;
+        else if (cat === 0) h = Math.floor(h * 90 / 100);
+        else if (cat >= 5) h = Math.floor(h * cat / 100);
+      }
+      // 暗算（0x14）命中 ×3/2（FUN_0043b6f3：target==12 → *3>>1）
+      if (sid === 20) {
+        const R = window.JW_REAL;
+        const tf = target && target.fam != null ? target.fam : ((R && R.familyOf) ? R.familyOf((target && target.clsId) || 0) : -1);
+        if (tf === 12) h = (h * 3) >> 1;
       }
       // 杜断（0x4d4abc）：+20（≤100）
       if (duDuan) h = Math.min(h + 20, 100);
-      // 效果修正：52 辅助策略命中；54 能力校准(辅助策略防御)；55 辅助全防御
-      if (caster.hasEffect && caster.hasEffect(52)) h = Math.min(h + caster.effectValue(52), 100);
-      if (target.hasEffect && target.hasEffect(54)) h = Math.max(h - target.effectValue(54), 0);
-      if (target.hasEffect && target.hasEffect(55)) h = Math.max(h - target.effectValue(55), 0);
+      /* FUN_0043b6f3 尾段实测：效果 0x1c(28) → min(h+v,100) 加法；
+       * 效果 0x1d(29) → max(h−v,0)。
+       * FUN_00405dbd = FUN_004cf398(u, 0x27, '7', 1, 0)：返回值取自 key=0x37(55)，
+       * 即 special==55（琉璃七宝刀 sval=20）→ 命中+10；旧 id=39 为 mod 表索引（死参数）。
+       * 2026-11-04 汇编实证：FUN_004cf398 返回值 = FUN_0043c794(key)（special 查询），
+       * 第 1 参 id 仅进 mod 补丁表 0x5089b0 且被 POP EDX 丢弃。 */
+      /* (0x1c, 0x3c)：special==60 → 命中+v（无物品死码）；(0x1d, 0x3e)：special==62 → 命中−v（无物品死码）。
+       * 策略必中为 (0x1b, 0x37)：special==55 琉璃七宝刀 → return 100（见下）。 */
+      if (caster.hasEffect && caster.hasEffect(60)) h = Math.min(h + caster.effectValue(60), 100);
+      if (caster.hasEffect && caster.hasEffect(62)) h = Math.max(h - caster.effectValue(62), 0);
+      if (caster.hasEffect && caster.hasEffect(55)) h = Math.min(h + 10, 100);
       return U.clamp(h, 0, 100);
     }
+    /* 会心率：1:1 原版 FUN_00405d5b：曲线 FUN_00405d0a(stat4 士气)；
+     * 「致命一击」（FUN_004cf398(u, 0x33, '1', 1, 1)）→ 返回值取自 key=0x31(49)，
+     * 即 special==49（青龙偃月刀 sval=0，布尔）→ 曲线值 +100（必定触发加成段）。
+     * 旧 id=51（养叔穿杨弓等）为 mod 表索引，不参与判定（2026-11-04 汇编实证）。
+     * 应用（FUN_00405de1 实测）：触发后 伤害 += 伤害×(曲线值+100)/2/100；
+     * 防御方持 special==65（黄金连环铠，FUN_00405dcf key='A'）→ 会心加成不施加且伤害清 0（会心格挡）。 */
     critRate(attacker, defender) {
-      // 致命一击攻击(41)：100
-      if (attacker.hasEffect && attacker.hasEffect(41)) return 100;
       const m = attacker.bHit != null ? attacker.bHit : attacker.hit, n = defender.bHit != null ? defender.bHit : defender.hit;
-      if (m >= 3 * n) return 100;
-      if (m >= 2 * n) return Math.floor((m - 2 * n) * 80 / n) + 20;
-      if (m >= n) return Math.floor((m - n) * 18 / n) + 2;
-      return 1;
+      let r;
+      if (m >= 3 * n) r = 100;
+      else if (m >= 2 * n) r = Math.floor((m - 2 * n) * 80 / n) + 20;
+      else if (m >= n) r = Math.floor((m - n) * 18 / n) + 2;
+      else r = 2;
+      if (attacker.hasEffect && attacker.hasEffect(49)) r += 100;
+      return r;
     }
-    // 连击率：1:1 原版 DoubleRate 0x405ce6（敏捷 4 段曲线）
+    /* 连击率：1:1 原版 FUN_00405cb0（0x405ce6 为其内部地址）
+     *   - 「主动连击」（FUN_004cf398(装备, 0x34, 'B', 1, 1)）→ 返回值取自 key=0x42(66)，
+     *     即 special==66（雌雄一对剑）→ 直接 100。
+     *     旧 id=52（紫绶仙衣）为 mod 表索引，不参与判定（2026-11-04 汇编实证）。
+     *   - 曲线 FUN_00405d0a(目标stat3, 攻击者stat3)：stat3 = 敏捷
+     *   - 反击中无连击 */
     doubleRate(attacker, defender, inCounter) {
       if (inCounter) return 0;   // 反击中无连击
-      // 58 主动连击（基版）/ 84 主动连击（mod 名表）：必定连击
-      if (attacker.hasEffect && (attacker.hasEffect(58) || attacker.hasEffect(84))) return 100;
-      const a = attacker.spd, d = defender.spd;
+      if (attacker.hasEffect && attacker.hasEffect(66)) return 100;
+      const a = attacker.bSpd != null ? attacker.bSpd : attacker.spd;
+      const d = defender.bSpd != null ? defender.bSpd : defender.spd;
       if (a >= 3 * d) return 100;
       if (a >= 2 * d) return Math.floor((a - 2 * d) * 80 / d) + 20;
       if (a >= d) return Math.floor((a - d) * 18 / d) + 2;
       return 1;
     }
-    // 兵种相克（jump table 0x4d2140，1:1 逆向）：dmg*k>>n
+    /* 兵种相克（0x4d1a80 40×40 乘法表，FUN_0043bc62 实测）：[攻兵种*40+防兵种]≠100 → dmg×v/100 */
     classMatchup(attacker, defender, dmg) {
       const R = window.JW_REAL;
-      if (!R) return dmg;
-      const af = attacker.fam !== undefined ? attacker.fam : R.familyOf(attacker.clsId || 0);
-      const df = defender.fam !== undefined ? defender.fam : R.familyOf(defender.clsId || 0);
-      // attacker family → {defender family: [k, n]}
-      const T = MATCHUP[af];
-      if (T && T[df]) {
-        const [k, n] = T[df];
-        dmg = Math.floor(dmg * k / (1 << n));
-      }
-      return dmg;
+      if (!R || !R.CLS_MATCHUP) return dmg;
+      const af = attacker.clsId || 0, df = defender.clsId || 0;
+      const v = R.CLS_MATCHUP[(af & 0x3f) * 40 + (df & 0x3f)];
+      return (v != null && v !== 100) ? Math.floor(dmg * v / 100) : dmg;
     }
-    // 策略伤害：1:1 原版 StratDamage 0x43bfaa
+    // 策略伤害：1:1 原版 StratDamage 0x43c00f（旧注释 0x43bfaa 不准，该处落在函数内部）
     stratDamage(caster, target, skill, preview) {
       const sid = skill.realId != null ? skill.realId : skill.id;
+      // 权威威力表 0x43c31e[73]，按 sid 索引
       const power = STRAT_POWER[sid] != null ? STRAT_POWER[sid] : 0;
       if (power <= 0) return 0;
       const R = window.JW_REAL;
       const I = caster.bMag != null ? caster.bMag : caster.mag;      // 精神 Int
       const J = target.bMag != null ? target.bMag : target.mag;
-      let dmg = (caster.lvl || 1) + 45;
+      // 基础伤害 = 等级 + 25（原版 EXE 实测，非 45）
+      let dmg = (caster.lvl || 1) + 0x19;
       if (I >= J) dmg += (I - J) / 3;
       else dmg = Math.max(dmg - (J - I) / 3, 0);
       dmg = Math.floor(dmg * power / 100);
-      // 目标兵种修正（0x43c412）
-      const dc = (target.clsId != null ? target.clsId : (target.def && target.def.clsId)) || 0;
-      if (dc === 39) dmg = Math.floor(dmg * 9 / 10);       // 燕云骑
-      else if (dc === 42 || dc === 43 || dc === 49 || dc === 50) dmg = Math.floor(dmg * 11 / 10); // 雄师/统军/箭车/玄术骑
-      else if (dc === 45) dmg = Math.floor(dmg * 13 / 10); // 力士
-      // 暗算×2：family(caster)==12
+      // 目标族修正：0x4d21b0[族]（FUN_004077d0 = 族索引，非兵种）
+      const R2 = window.JW_REAL;
+      const df = target.fam != null ? target.fam : ((R2 && R2.familyOf) ? R2.familyOf(target.clsId || 0) : 0);
+      const mod = (R2 && R2.STRAT_FAM_MOD && R2.STRAT_FAM_MOD[df] != null) ? R2.STRAT_FAM_MOD[df] : 100;
+      dmg = Math.floor(dmg * mod / 100);
+      // 暗算×2：family(target)==12（虚士家族）
       if (sid === 20 && R) {
-        const cf = caster.fam !== undefined ? caster.fam : R.familyOf(dc);
-        if (cf === 12) dmg *= 2;
+        const tf = target.fam !== undefined ? target.fam : R.familyOf(df);
+        if (tf === 12) dmg = Math.floor(dmg * 2);
       }
-      // 辅助火类策略(47)/风类策略(48)（effect_type(s)==0/3）
-      const etype = skill.typeId != null ? skill.typeId : skill.type;
-      if ((etype === 0) && caster.hasEffect && caster.hasEffect(47)) dmg = Math.floor(dmg * (100 + caster.effectValue(47)) / 100);
-      if ((etype === 3) && caster.hasEffect && caster.hasEffect(48)) dmg = Math.floor(dmg * (100 + caster.effectValue(48)) / 100);
-      // 徐茂功(person22) 且 20<=s<=37：+50%（0x43c50a）
-      if (caster.pid === 22 && sid >= 20 && sid <= 37) dmg = Math.floor(dmg * 150 / 100);
-      // 目标 减轻策略损伤(59)：dmg -= dmg*val/100
-      if (target.hasEffect && target.hasEffect(59)) dmg = Math.floor(dmg * (100 - target.effectValue(59)) / 100);
-      // 随机：rand(7)
+      /* 效果修正（FUN_0043c00f 实测 + 2026-11-04 key 判据修正）：
+       * 施法者 FUN_004cf398(caster,0x28,'8',1,0) → key=0x38(56) 破凰凤羽扇 → dmg += dmg×v/100；
+       * 目标   FUN_004cf398(target,0x29,'C',1,0) → key=0x43(67) 梅花亮银铠 → dmg −= dmg×v/100（下限0）；
+       * 施法者 FUN_00405dbd → key=0x37(55) 琉璃七宝刀 → dmg += dmg×v/100。
+       * 天气/地形加成段（FUN_0044270c 上下文 +20%/+25%）条件未全证，暂不移植。 */
+      if (caster.hasEffect && caster.hasEffect(56)) dmg += Math.floor(dmg * caster.effectValue(56) / 100);
+      if (target.hasEffect && target.hasEffect(67)) dmg = Math.max(dmg - Math.floor(dmg * target.effectValue(67) / 100), 0);
+      if (caster.hasEffect && caster.hasEffect(55)) dmg += Math.floor(dmg * caster.effectValue(55) / 100);
+      // 随机：rand(7)，r>2→+r-2，else→-r
       if (!preview) {
         const r = U.rnd(0, 6);
         dmg = r > 2 ? dmg + r - 2 : Math.max(dmg - r, 0);
@@ -1314,11 +1375,24 @@
       }
       if (realAtt && defender && defender.terrEffect) {
         const dmg = this.physicalDamage(attacker, defender, mode || 0);
-        let crit = Math.random() * 100 < this.critRate(attacker, defender);
         const hit = Math.random() * 100 < this.hitRate(attacker, defender);
-        // 化解攻击效果(57)：会心伤害归 0（0x405ef8）
-        if (crit && defender.hasEffect && defender.hasEffect(57)) return { dmg: 0, crit: false, hit };
-        return { dmg: crit ? Math.floor(dmg * 3 / 2) : dmg, crit, hit };
+        if (!hit) return { dmg: 0, crit: false, hit: false };
+        /* 会心（FUN_00405de1 实测）：roll(曲线值) 通过（致命一击 → critRate 已含 +100 必定）→
+         * 伤害 += 伤害×(曲线值+100)/2/100。
+         * 会心格挡（FUN_00405dcf → FUN_004cf398(def,0x30,'A',1,1) key=0x41(65) 黄金连环铠）：
+         * 汇编 00405ef0 TEST EAX,EAX; JZ→加成；否则 MOV [puVar1],0 —— 格挡时伤害清 0。
+         * 且 FUN_00405de1 仅在第一段(local_8==0)判定会心，多段连击后续段不加成。 */
+        const cr = this.critRate(attacker, defender);
+        const curve = cr >= 101 ? cr - 100 : cr;   // 剥离致命一击的 +100
+        const crit = cr >= 101 || (Math.random() * 100 < curve);
+        let out = dmg;
+        if (crit) {
+          if (defender.hasEffect && defender.hasEffect(65)) {
+            return { dmg: 0, crit: true, hit: true, parried: true };   // 会心格挡
+          }
+          out = dmg + Math.floor(dmg * ((curve + 100) >> 1) / 100);
+        }
+        return { dmg: out, crit, hit: true };
       }
       let base;
       if (skill && skill.type === "damage") {
@@ -1410,7 +1484,7 @@
         for (const e of this.enemies) {
           if (!e.isAlive) continue;
           if (Math.abs(e.x - attacker.x) + Math.abs(e.y - attacker.y) <= 4
-              && !(e.hasEffect && e.hasEffect(57))) {
+              && !(e.hasEffect && e.hasEffect(97))) {
             e.addStatus("fear", true); e.addStatus("sealed", true);
           }
         }
@@ -1462,6 +1536,8 @@
       for (let s = 0; s < strikes; s++) {
         if (!target.isAlive) break;
         const calc = this.computeDamage(attacker, target, skill, isCounter ? 1 : 0);
+        /* FUN_00405de1 尾段：每攻击段对目标兵种出手计数 +1（DAT_00508ec5，供 107 追伤用） */
+        this._bumpClsAtkCount(target.clsId || 0);
         /* §12.1 各【技】的命中处理（apply step，每次出手） */
         if (attacker._tech && attacker._tech !== "sha" && attacker._tech !== "gaima") {
           const T = attacker._tech;
@@ -1470,14 +1546,14 @@
             if (target.mp > 0) { target.mp = 0; this.logEntry(`${target.name} 被怒目震慑，MP 清空`, "debuff"); }
           } else if (T === "guimen") {
             /* 鬼门刀 0x4d72e0：目标移动力归 0 且 怯（带 57 免疫） */
-            if (!(target.hasEffect && target.hasEffect(57))) {
+            if (!(target.hasEffect && target.hasEffect(97))) {
               target.status.mov = -(target.mov || 0);
               target.addStatus("fear", true);
               this.logEntry(`${target.name} 中鬼门刀，动弹不得且胆怯`, "debuff");
             }
           } else if (T === "longyin") {
             /* 龙吟 0x4d72e0：50% 降目标武器等级 1，否则降防具等级 1（>0 才降；带 57 免疫） */
-            if (!(target.hasEffect && target.hasEffect(57))) {
+            if (!(target.hasEffect && target.hasEffect(97))) {
               if (Math.random() < 0.5 && (target.weaponLv || 1) > 1) { target.weaponLv--; this.logEntry(`${target.name} 武器被龙吟震裂（等级${target.weaponLv}）`, "debuff"); }
               else if ((target.armorLv || 1) > 1) { target.armorLv--; this.logEntry(`${target.name} 铠甲被龙吟震碎（等级${target.armorLv}）`, "debuff"); }
             }
@@ -1522,7 +1598,7 @@
           dmg: calc.dmg, crit: calc.crit, hp: target.hp, maxHp: target.maxHp
         });
         this.logEntry(
-          `${attacker.name} ${skill ? "施放" : "攻"} ${target.name} ${calc.crit ? "(会心!)" : ""} ${calc.dmg} 伤害${strikes>1 ? ` (第${s+1}击)` : ""}`,
+          `${attacker.name} ${skill ? "施放" : "攻"} ${target.name} ${calc.parried ? "(格挡!)" : calc.crit ? "(会心!)" : ""} ${calc.dmg} 伤害${strikes>1 ? ` (第${s+1}击)` : ""}`,
           "dmg"
         );
         if (calc.dmg > 0) lifestealDmg += calc.dmg;
@@ -1530,46 +1606,21 @@
          * 目标等级高于自己则不生效（"按顺序直到第一个更高等级"的单目标化） */
         if (calc.dmg > 0 && target.isAlive && attacker.pid === 67
             && (target.lvl || 1) <= (attacker.lvl || 1)
-            && !(target.hasEffect && target.hasEffect(57))) {
+            && !(target.hasEffect && target.hasEffect(97))) {
           target.addStatus("lost", true);
           this.logEntry(`${target.name} 陷入梦魇迷失`, "debuff");
         }
-        /* 35 远攻混乱 / 36 远攻淬毒 / 38 禁咒破智 / 37 麻痹破爆：命中后附带状态
-         * （概率按 §4.5：35 混乱 60%、36 中毒 100%、38 封 100%、37 为六种随机属性攻击） */
-        if (calc.dmg > 0 && target.isAlive && attacker.hasEffect) {
-          const st = [];
-          const roll = (pct) => Math.random() * 100 < (pct & 0xff);
-          if (attacker.hasEffect(35) && roll(60)) st.push("confused");
-          if (attacker.hasEffect(36)) st.push("poison");
-          if (attacker.hasEffect(38)) st.push("sealed");
-          /* 34 恶移麻痹（虎类豹）：命中后 60% 麻痹（§4.5 cave 0x40913d） */
-          if (attacker.hasEffect(34) && roll(60)) st.push("paralyzed");
-          /* 37 随机属性攻击（mod 0x4d0c6e）：六次独立判定，L=武器等级，
-           * 各自 chance((L·a+b)&0xff)：麻痹5L+15 穷计4L+4 混乱L+1 中毒L+6 怯2L+2 迷失3L+3 */
-          if (attacker.hasEffect(37)) {
-            const L = attacker.weaponLv || 1;
-            const R6 = [["paralyzed", 5 * L + 15], ["sealed", 4 * L + 4], ["confused", L + 1],
-                        ["poison", L + 6], ["fear", 2 * L + 2], ["lost", 3 * L + 3]];
-            for (const [k, p] of R6) if (roll(p)) st.push(k);
-          }
-          /* 兵种自带命中效果（§4.5）：class 50 玄术骑→混乱60%、
-           * class 45 力士→麻痹60%、class 38 震天骑→迷失60% */
-          const ac = attacker.clsId;
-          if (ac === 50 && roll(60)) st.push("confused");
-          if (ac === 45 && roll(60)) st.push("paralyzed");
-          if (ac === 38 && roll(60)) st.push("lost");
-          for (const k of st) target.addStatus(k, true);
-          if (st.length) {
-            const label = { confused: "混乱", poison: "中毒", sealed: "穷计", paralyzed: "麻痹", fear: "怯", lost: "迷失" };
-            this.logEntry(`${target.name} 陷入${st.map(k => label[k]).join("、")}`, "debuff");
-          }
-        }
-        /* 反击（1:1 §4.4 Counter）：目标存活、未混乱、攻击者无「无反击攻击」、
-         * 攻击者在目标射程内。深度 >1 停止；深度 1 时仅当被反击方带 40「遇反击后反击」
-         * 才允许再反击一次（反击反击）。 */
-        const allowDepth = cDepth === 0 || (cDepth === 1 && target.hasEffect && target.hasEffect(40));
+        /* 2026-11-04 清理：原「34 麻痹 / 35 混乱 / 36 中毒 / 38 穷计 / 37 随机六判定 /
+         * 兵种自带(cls45/50/38) 状态附加」整块删除 —— 出自 dis4 手动反汇编批次，其地址解读
+         * 已被证伪（0x40913d 实为 WinMain，Ghidra 函数边界确认），且按 FUN_004cf398 key 判据
+         * special=34/35/36/37/38 无任何引擎查询点（死码）。EXE 中物理攻击无此命中附加状态链。
+         * 反击（1:1 §4.4 Counter）：目标存活、未混乱、攻击者无「压制反击」（special=107
+         * 黄龙升天刀，FUN_00478f08 同款判据）、攻击者在目标射程内。深度 >1 停止；深度 1 时
+         * 仅当被反击方带「遇反击后反击」（FUN_004cf398(u,0x28,0x38,1,0) → key=0x38(56)
+         * 破凰凤羽扇，与策略伤害加成同判据）才允许再反击一次（反击反击）。 */
+        const allowDepth = cDepth === 0 || (cDepth === 1 && target.hasEffect && target.hasEffect(56));
         if (!skill && s === 0 && target.isAlive && !(target.status && target.status.confused)
-            && !(attacker.hasEffect && attacker.hasEffect(44))
+            && !(attacker.hasEffect && attacker.hasEffect(107))
             && this.inRange(target, attacker) && cDepth < 2 && allowDepth) {
           await new Promise(r => setTimeout(r, 200));
           await this.attack(target, attacker, null, true, cDepth + 1);   // 反击 mode=1
@@ -1670,7 +1721,9 @@
        * 连续策略(83) 第二次施放 cost×2；房玄龄(179) 相邻时折半(≥1)。 */
       let cost = skill.mp;
       if (this.isSecondCast(attacker)) cost *= 2;
-      if (attacker.hasEffect && attacker.hasEffect(49)) cost -= Math.floor(cost * attacker.effectValue(49) / 100);
+      /* 节约MP：FUN_00422ede → FUN_0043c794(u,0x46,0,7) key=0x46(70)=藤牌 special（sval=87）
+       * → cost −= cost×v/100。旧绑定 49 为 mod 表索引误读（2026-11-04 汇编实证）。 */
+      if (attacker.hasEffect && attacker.hasEffect(70)) cost -= Math.floor(cost * attacker.effectValue(70) / 100);
       const hu = this.units.find(u => u.pid === 179 && u.isAlive && u !== attacker
         && Math.abs(u.x - attacker.x) + Math.abs(u.y - attacker.y) === 1);
       if (hu) cost = Math.max(Math.floor(cost / 2), 1);
@@ -2056,9 +2109,10 @@
       attacker._stratChain = val;
     }
 
-    // ---- 引导攻击（effect 46）----
+    // ---- 引导攻击（名表46；FUN_004cf398(u,0x2e,0x39,1,0) → key=0x39(57)）----
+    // 载体 = special==57 白羽扇/华铤（2026-11-04 key 判据修正，旧绑 46 死码）
     hasGuidedAttack(attacker) {
-      return attacker.hasEffect && attacker.hasEffect(46);
+      return attacker.hasEffect && attacker.hasEffect(57);
     }
     /* 引导攻击下一目标（0x436586/§10.5 简化）：攻击者射程内的最近存活敌
      * （原版：射程形状内，若列表含 [0x4b2c28]=被杀者槽位则跳过，否则取最优/最后一个） */
@@ -3306,12 +3360,103 @@
            * 语义待 REA 反汇编确认；当前章节数据不含此 op，先按忽略处理。 */
           break;
         }
+        case "set_flag": {
+          /* 原版 0x0B（handler 0x4142b2）：flag[arg0] = (arg1 != 0)。
+           * §4 段自锁全靠它：条件表 test_flags [F] + body set_flag F → 事件只发一次。 */
+          const F = this._scriptFlags || (this._scriptFlags = {});
+          F[a[0]] = (a[1] !== undefined && a[1] !== 0);
+          break;
+        }
+        case "clear_flags": {
+          /* 原版 0x0A（0x415ad7）：清旗 0..255（章首复位），高号旗持久。 */
+          const F = this._scriptFlags || (this._scriptFlags = {});
+          for (const k of Object.keys(F)) { const n = +k; if (!Number.isNaN(n) && n <= 255) delete F[k]; }
+          break;
+        }
           default: break; // play_sound/delay/unit_op_4f/4d/ui_49/ui_0e/data_transfer/if/set_result 等
         }
         } catch (err) { console.warn("[script]", label, o.name, err && err.message); }
       }
     }
+    /* ===== 战斗剧情 1:1 执行层（EEX §4 模型 —— tools/eex_format_doc.md 实测）=====
+     * select(0x4100a1)：顺序评估各段条件表，每条指令返回 1 才算满足（非 test 指令恒真不否决），
+     * 最后满足的段胜出并执行其 body。多段场景=事件循环：轮询检查点反复重选；
+     * 单段场景=线性演出：body 到 END 即推进下一场景。
+     * 块执行(0x4105a8)：end=块尾；if=取条件指令（else→同层上次 IF 为假才执行；test→真才执行），
+     * 不成立跳到块尾；exit_section(0x0c)=中止本段重选；next_scene(0x0d)=标记推进但本块走完；
+     * goto_scenario(0x11)=结束剧本跳下一章。yield 指令异步等待（dialog/delay/actor_move…）。
+     * 战场检查点(0x40bbc7/0x44c638/0x44ec60/0x44ed52/0x44f0c7)：开战/阶段开始/单位行动后/死亡后轮询。
+     * S 文件无 goto（实测 0 处），单挑/演出 op 复用 _runActions 单条执行。 */
+    _evalSectionConds(conds) {
+      for (const c of conds) {
+        if (c[0] === "end") break;
+        if (c[0].startsWith("test_") && !this._evalCond({ name: c[0], args: c[1] })) return false;
+      }
+      return true;
+    }
+    async _runEexBlock(body, depth, label) {
+      let i = 0, last = 1;
+      while (i < body.length) {
+        const ins = body[i], nm = ins[0];
+        if (nm === "end") return null;
+        if (nm === "if") {
+          const end = ins[4];
+          let r;
+          if (ins[2] === "else") r = last === 0 ? 1 : 0;
+          else r = this._evalCond({ name: ins[2], args: ins[3] }) ? 1 : 0;
+          last = r;
+          if (r === 1) await this._runEexBlock(body.slice(i + 1, end), depth + 1, label + "/if");
+          i = end; continue;
+        }
+        if (nm === "exit_section") return { abort: true };
+        if (nm === "next_scene") { this._eexNext = true; i++; continue; }
+        if (nm === "goto_scenario") return { scenario: (ins[1] || [])[0] };
+        await this._runActions([{ name: nm, args: ins[1] }], label);
+        i++;
+      }
+      return null;
+    }
+    async pollEexEvents() {
+      const CH = (window.JW_BATTLE_EVENTS_V2 || {})[this._eexFile];
+      if (!CH || this._eexDone) return false;
+      const sc = CH.scenes[this._eexScene || 0];
+      if (!sc) { this._eexDone = true; return true; }
+      let win = null;                                 // select：最后满足者胜出
+      for (const sec of sc.sections) if (this._evalSectionConds(sec.conds)) win = sec;
+      if (!win) return true;
+      const hasShow = win.body.some(b => b[0] === "dialog" || b[0] === "unit_say" || b[0] === "duel_setup");
+      if (hasShow) this._scriptPause = true;
+      this._eexNext = false;
+      const r = await this._runEexBlock(win.body, 0, this._eexFile + "/s" + this._eexScene);
+      if (hasShow) {
+        this._scriptPause = false;
+        if (this.forceWin && this.onEvent) this.onEvent({ type: "scriptForceWin", reason: this.forceWin });
+      }
+      if (r && r.scenario !== undefined && this.onEvent) this.onEvent({ type: "scriptScenarioJump", scenario: r.scenario });
+      // 场景推进：0x0d 标记，或单段场景 body 自然走完（0x0c 中止则停留重选）
+      if (!(r && r.abort) && (this._eexNext || sc.sections.length === 1)) {
+        this._eexScene++;
+        if (this._eexScene >= CH.scenes.length) {
+          this._eexDone = true;
+          if (this.onEvent) this.onEvent({ type: "scriptScenarioDone" });
+        }
+      }
+      return true;
+    }
     async runIntroEvents() {
+      // v2 结构化层优先：scene0 = 部署场景，线性走完即入 scene1 事件循环
+      if ((window.JW_BATTLE_EVENTS_V2 || {})[this._eexFile]) {
+        const CH = window.JW_BATTLE_EVENTS_V2[this._eexFile];
+        const sc = CH.scenes[0];
+        if (sc) {
+          let win = null;
+          for (const sec of sc.sections) if (this._evalSectionConds(sec.conds)) win = sec;
+          if (win) await this._runEexBlock(win.body, 0, this._eexFile + "/s0");
+        }
+        this._eexScene = 1;
+        if (this.onEvent) this.onEvent({ type: "scriptIntroDone" });
+        return;
+      }
       if (!this.script || !this.script.intro) return;
       for (let i = 0; i < this.script.intro.length; i++) {
         if (this._scriptDone.has("intro" + i)) continue;
@@ -3335,6 +3480,7 @@
     }
 
     async pollScriptEvents() {
+      if (await this.pollEexEvents()) return;      // v2 §4 结构化层优先
       if (!this.script || !this.script.polls || this.forceWin) return;
       for (let i = 0; i < this.script.polls.length; i++) {
         if (this._scriptDone.has("poll" + i)) continue;
