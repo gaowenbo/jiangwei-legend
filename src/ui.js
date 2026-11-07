@@ -43,7 +43,7 @@
           <div class="story-actors"></div>
           <!-- 原版顶栏：菜单栏(文件/功能/情报) + 图标工具条 + 右侧双蓝条 -->
           <div class="orig-topbar">
-            <div class="otb-menu"><span>文件</span><span>功能</span><span>情报</span></div>
+            <div class="otb-menu"><span data-menu="file">文件</span><span data-menu="func">功能</span><span data-menu="info">情报</span></div>
             <div class="otb-row">
               <div class="otb-icons"><i class="ic" title="城门"><svg viewBox="0 0 24 24"><path d="M3 21V9h3V6h2v3h2V5h4v4h2V6h2v3h3v12z" fill="#cfd6dd" stroke="#5a6672" stroke-width="1.3"/><path d="M9 21v-6a3 3 0 0 1 6 0v6" fill="#7d8894" stroke="#5a6672" stroke-width="1.2"/></svg></i><i class="ic" title="营地"><svg viewBox="0 0 24 24"><path d="M12 4 3 20h18z" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M12 4v16" stroke="#5a6672" stroke-width="1.1"/><path d="M12 2v3" stroke="#5a6672" stroke-width="1.4"/></svg></i><i class="ic" title="人物"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.4" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M5.5 21c0-4 3-6.5 6.5-6.5S18.5 17 18.5 21z" fill="#cfd6dd" stroke="#5a6672" stroke-width="1.3"/></svg></i><i class="ic" title="物品"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="1.5" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M4 11h16M8 7V5h8v2" stroke="#5a6672" stroke-width="1.2" fill="none"/></svg></i><i class="ic" title="策略"><svg viewBox="0 0 24 24"><path d="M6 4h11a2 2 0 0 1 2 2v15H8a2 2 0 0 1-2-2z" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M9 9h7M9 12.5h7M9 16h4" stroke="#5a6672" stroke-width="1.1"/></svg></i><i class="ic" title="宝物"><svg viewBox="0 0 24 24"><path d="M4 11h16v9H4z" fill="#e6dcc4" stroke="#5a6672" stroke-width="1.3"/><path d="M4 11a8 8 0 0 1 16 0" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><rect x="10.5" y="12.5" width="3" height="4" fill="#c8a24a" stroke="#5a6672" stroke-width="1"/></svg></i><i class="ic" title="存档"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><rect x="8" y="12" width="8" height="8" fill="#cfd6dd" stroke="#5a6672" stroke-width="1.1"/><rect x="9" y="6" width="6" height="4" fill="#9aa6b2" stroke="#5a6672" stroke-width="1"/></svg></i><i class="ic" title="读档"><svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10H3z" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M3 7V5h6l2 2" fill="none" stroke="#5a6672" stroke-width="1.2"/></svg></i><i class="ic" title="设置"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" stroke="#5a6672" stroke-width="1.4"/></svg></i></div>
               <div class="otb-bars">
@@ -83,7 +83,7 @@
           </div>
           <!-- 原版战斗顶栏：与剧情屏同款（菜单栏 + 图标组 + 右侧信息区） -->
           <div id="topbar" class="orig-topbar">
-            <div class="otb-menu"><span>文件</span><span>功能</span><span>情报</span></div>
+            <div class="otb-menu"><span data-menu="file">文件</span><span data-menu="func">功能</span><span data-menu="info">情报</span></div>
             <div class="otb-row">
               <div class="otb-icons">
                 <i class="ic" title="城门"><svg viewBox="0 0 24 24"><path d="M3 21V9h3V6h2v3h2V5h4v4h2V6h2v3h3v12z" fill="#cfd6dd" stroke="#5a6672" stroke-width="1.3"/><path d="M9 21v-6a3 3 0 0 1 6 0v6" fill="#7d8894" stroke="#5a6672" stroke-width="1.2"/></svg></i><i class="ic" title="营地"><svg viewBox="0 0 24 24"><path d="M12 4 3 20h18z" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M12 4v16" stroke="#5a6672" stroke-width="1.1"/><path d="M12 2v3" stroke="#5a6672" stroke-width="1.4"/></svg></i><i class="ic" title="人物"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.4" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M5.5 21c0-4 3-6.5 6.5-6.5S18.5 17 18.5 21z" fill="#cfd6dd" stroke="#5a6672" stroke-width="1.3"/></svg></i><i class="ic" title="物品"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="1.5" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M4 11h16M8 7V5h8v2" stroke="#5a6672" stroke-width="1.2" fill="none"/></svg></i><i class="ic" title="策略"><svg viewBox="0 0 24 24"><path d="M6 4h11a2 2 0 0 1 2 2v15H8a2 2 0 0 1-2-2z" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><path d="M9 9h7M9 12.5h7M9 16h4" stroke="#5a6672" stroke-width="1.1"/></svg></i><i class="ic" title="宝物"><svg viewBox="0 0 24 24"><path d="M4 11h16v9H4z" fill="#e6dcc4" stroke="#5a6672" stroke-width="1.3"/><path d="M4 11a8 8 0 0 1 16 0" fill="#dfe4e9" stroke="#5a6672" stroke-width="1.3"/><rect x="10.5" y="12.5" width="3" height="4" fill="#c8a24a" stroke="#5a6672" stroke-width="1"/></svg></i>
@@ -192,6 +192,11 @@
         }
       });
       this.root.addEventListener("click", (e) => {
+        /* 原版顶栏菜单（strings 0x48e8c4..0x48e94c 12 项 + APPMENU 模板 0x48e980，
+         * 分发器 0x475140 jump table case 0..9）：文件/功能/情报 三个下拉。 */
+        const mk = e.target.closest(".otb-menu span[data-menu]");
+        if (mk) { e.stopPropagation(); this.showTopMenu(mk.dataset.menu, mk); return; }
+        if (this._topMenu) { this.closeTopMenu(); }
         const btn = e.target.closest("[data-action]");
         if (btn) { this.emitAction(btn.dataset.action, btn); return; }
         // 战斗地图点击
@@ -223,6 +228,78 @@
       if (bar) bar.classList.toggle("hidden", !on);
     }
 
+    /* ---- 原版顶栏系统菜单（strings 0x48e8c4..0x48e94c 12 项；分发器 0x475140）----
+     * 文件：结束游戏/保存/读取；功能：环境设定/战场缩小图/结束回合/检索未执行部队；
+     * 情报：武将一览/持有道具一览/地形情报一览/宝物图鉴/胜利条件。 */
+    showTopMenu(kind, el) {
+      this.closeTopMenu();
+      const TOP_MENUS = {
+        file: [["save", "保存"], ["load", "读取"], ["quit", "结束游戏"]],
+        func: [["settings", "环境设定"], ["minimap", "战场缩小图"], ["endturn", "结束回合"], ["idle-units", "检索未执行部队"]],
+        info: [["heroes", "武将一览"], ["items", "持有道具一览"], ["terrain", "地形情报一览"], ["treasure", "宝物图鉴"], ["victory", "胜利条件"]],
+      };
+      const items = TOP_MENUS[kind];
+      if (!items) return;
+      const box = document.createElement("div");
+      box.className = "top-menu-drop";
+      box.style.cssText = "position:fixed;z-index:120;background:rgba(30,22,12,.96);border:1px solid #6a5636;box-shadow:0 4px 18px rgba(0,0,0,.5);padding:4px 0;min-width:132px";
+      const r = el.getBoundingClientRect();
+      box.style.left = Math.round(r.left) + "px";
+      box.style.top = Math.round(r.bottom + 2) + "px";
+      box.innerHTML = items.map(([k, t]) => `<div class="tm-item" data-tm="${k}" style="padding:5px 16px;color:#e8d5a3;font-size:14px;cursor:pointer;white-space:nowrap">${t}</div>`).join("");
+      box.querySelectorAll(".tm-item").forEach(it => {
+        it.addEventListener("mouseenter", () => { it.style.background = "rgba(184,134,11,.28)"; });
+        it.addEventListener("mouseleave", () => { it.style.background = ""; });
+        it.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          this.closeTopMenu();
+          this.handleTopMenu(it.dataset.tm);
+        });
+      });
+      document.body.appendChild(box);
+      this._topMenu = box;
+    }
+    closeTopMenu() { if (this._topMenu) { this._topMenu.remove(); this._topMenu = null; } }
+    handleTopMenu(cmd) {
+      const App = window.JW.App;
+      switch (cmd) {
+        case "save": App.ui.showSaveLoad(App, "save"); break;
+        case "load": App.ui.showSaveLoad(App, "load"); break;
+        case "quit": App.showTitle(); break;
+        case "settings": App.showSettings(); break;
+        case "endturn": App.endTurn(); break;
+        case "minimap": this.toggleMinimap(); break;
+        case "idle-units": this._highlightIdle(); break;
+        case "heroes": this._panel("武将一览", App.battle ? App.battle.sideUnits.map(u => `${u.name} Lv${u.lvl} HP${u.hp}/${u.maxHp} 攻${u.atk} 防${u.def} 精${u.mag} 暴${u.spd} 士${u.hit}${u.isAlive ? "" : "（撤退）"}`) : Object.keys(App.roster || {}).map(k => { const r = App.roster[k]; return `${(r && r.name) || k}`; })); break;
+        case "items": { const R = window.JW_REAL; const rows = (App.warehouse || []).map(e => { const it = R && R.items ? R.items[e.id] : null; return it ? `${it.name}${e.count > 1 ? " ×" + e.count : ""}` : null; }).filter(Boolean); this._panel("持有道具一览", rows.length ? rows : ["（仓库为空）"]); break; }
+        case "terrain": { const R = window.JW_REAL; const names = R && R.terrainNames ? R.terrainNames : []; this._panel("地形情报一览", names.map((n, i) => `${i} ${n}`).filter(s => s.trim().length > 1)); break; }
+        case "treasure": { const R = window.JW_REAL; const items = R && R.items ? R.items : []; const rows = items.filter(x => x && x.type % 2 === 1 && x.special != null && x.name).map(x => `${x.name}（${x.type >= 71 ? "宝物" : "特殊"}）`); this._panel("宝物图鉴", rows.length ? rows : ["（暂无图鉴条目）"]); break; }
+        case "victory": { const b = App.battle; const rows = []; if (b && b.victoryText) rows.push(b.victoryText); if (b && b.goalText) rows.push(b.goalText); if (!rows.length) rows.push("（本关无特殊条件）"); this._panel("胜利条件", rows); break; }
+      }
+    }
+    _highlightIdle() {
+      const App = window.JW.App, b = App.battle;
+      if (!b) return;
+      const idle = b.sideUnits.filter(u => u.isAlive && !u.hasActed);
+      if (!idle.length) { this.addLog("所有部队均已行动", "sys"); return; }
+      this.addLog(`未执行部队：${idle.map(u => u.name).join("、")}`, "sys");
+      if (this.scene && this.scene.blinkCells) this.scene.blinkCells(idle.map(u => [u.x, u.y]), 0xd0a13a);
+      if (idle[0] && this.scene && this.scene.centerOnCell) this.scene.centerOnCell(idle[0].x, idle[0].y);
+    }
+    _panel(title, linesArr) {
+      const panel = document.createElement("div");
+      panel.style.cssText = "position:fixed;inset:0;z-index:118;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center";
+      panel.innerHTML = `<div class="jw-panel" style="padding:20px;width:min(560px,calc(100vw - 24px));max-height:76vh;overflow-y:auto">
+        <div style="font-size:20px;color:var(--gold-bright);margin-bottom:12px;text-align:center">${title}</div>
+        <div class="tm-rows" style="font-size:14px;color:var(--ink,#e8d5a3);line-height:1.9"></div>
+        <div style="text-align:center;margin-top:14px"><button class="jw-btn jw-btn--primary" data-close>关闭</button></div>
+      </div>`;
+      const rows = panel.querySelector(".tm-rows");
+      rows.innerHTML = (linesArr || []).map(t => `<div>${String(t).replace(/</g, "&lt;")}</div>`).join("");
+      panel.querySelector("[data-close]").addEventListener("click", () => panel.remove());
+      panel.addEventListener("click", (e) => { if (e.target === panel) panel.remove(); });
+      this.root.appendChild(panel);
+    }
     emitAction(name, el) {
       if (this.onAction) this.onAction({ name, el });
     }
@@ -315,7 +392,7 @@
     }
     /* 大立绘资源 URL（Tou 120×120，按 face 号） */
     figureUrlFor(who) {
-      const idx = this.faceIndexFor(who);
+      const idx = this.figureIndexFor(who);
       if (idx == null) return "";
       const n = String(idx).padStart(3, "0");
       /* 用透明底版本（边缘连通黑色已抠除），贴合原版"立绘直接叠在场景上" */
@@ -812,7 +889,10 @@
           el.dataset.actor = key;
           /* 场上立绘用战斗单位图（Unit_mov 48×48 首帧，原版剧情人物就是这样站着的），
            * 120×120 人物图只用于对话框头像。 */
-          const unit = this.unitFigureFor(name);
+          /* promo(形态)取自战斗单位档案（部署 0x45 字段），剧情里通常 0 */
+          const bu = window.JW.App && window.JW.App.battle
+            ? window.JW.App.battle.units.find(x => x.pid === pid || x.name === name) : null;
+          const unit = this.unitFigureFor(pid, bu ? (bu.promo || 0) : 0);
           /* 原版剧情场上小人是「裸精灵」：脚下**没有**名字标签
            * （姓名只出现在对话框与顶栏蓝条）。 */
           el.innerHTML = `<div class="sa-img">${unit || '<div class="sa-ph"></div>'}</div>`;
@@ -867,6 +947,27 @@
       if (layer) layer.innerHTML = "";
     }
 
+    teleportActor(mode, who, slot, x, y, dir) {
+      const layer = this.storyScreen && this.storyScreen.querySelector(".story-actors");
+      if (!layer) return;
+      let el = null;
+      if (mode === 0) {
+        el = layer.querySelector(`[data-actor="a${who}"]`);
+      } else {
+        const all = layer.querySelectorAll(".story-actor");
+        el = all[slot];
+      }
+      if (!el) return;
+      el.dataset.x = x | 0;
+      el.dataset.y = y | 0;
+      el.style.left = Math.max(2, Math.min(94, x | 0)) + "%";
+      el.style.top = Math.max(8, Math.min(92, y | 0)) + "%";
+      el.style.transform = "translate(-50%, -100%)";
+      if (dir !== undefined && dir !== 65535) this._actorFace(el, dir | 0);
+      const b = window.JW.App && window.JW.App.battle;
+      if (b) b.checkBattleEvents("reach", { pid: who, x: x | 0, y: y | 0 }, x | 0, y | 0);
+    }
+
     /* 立绘：优先角色档案（剧情解锁），否则按人物表的 face 索引取原版 Face.e5（64×80） */
     faceFor(who) {
       const role = window.JW_ROLESTORE && window.JW_ROLESTORE[who];
@@ -883,13 +984,30 @@
 
     /* 场上立绘：战斗单位图 Unit_mov（48×48、11 帧），显示首帧并放大。
      * sprite 索引复用战斗的 spriteIndex 规则（person.sprite + 兵种）。 */
-    unitFigureFor(who) {
+    unitFigureFor(who, form) {
+      /* 第 11 轮修正：原版战场/剧情小人的 Unit_mov 段号**不是** persons[pid].sprite 直查，
+       * 必须先经 ov 覆盖表变换（第 7 轮定论 FUN_0043fc48，real.js spriteIndex）：
+       *   ov = SPRITE_OV[pid]（VA 0x501000 u16 表）；
+       *   base = ov==0 ? sprite : (ov<0x21 ? (ov-1)*3+0x50+(sprite%3) : ov+0x8f)；
+       *   seg  = base<0x50 ? base*3+min(form,2) : base+0xa0。
+       * 旧实现在这里直接用 p.sprite（注释写“sprite 直查无转换”，已被第 7 轮作废），
+       * 导致剧情小人张冠李戴（如赵云应 408 金甲，直查只得 0x69=105）。
+       * 数值一律取 real.js 已算好的 mkUnit().spriteIdx（同一权威实现），避免两份公式漂移。 */
       const p = this._personFor(who);
       if (!p) return "";
-      /* 与 real.js spriteIndex 同一权威定论（第 34 轮 E2）：
-       * persons[pid].sprite 直接就是 Unit_mov 段号（原版 0x44249f `mov dl,[person+0xF]`）。
-       * 旧公式（v+0x3f 等）抄自兴唐传，姜维传不适用 —— 剧情小人因此张冠李戴。 */
-      const idx = (p.sprite == null || p.sprite < 0) ? (0x44 + (p.cls | 0)) : (p.sprite | 0);
+      const pid = (typeof who === "number") ? who : p.id;
+      const R = window.JW_REAL;
+      let idx = null;
+      if (R && R.mkUnit) {
+        /* 用 mkUnit 的权威 spriteIdx（内部即 spriteIndex(pid, p.sprite, promo)）。
+         * 签名：mkUnit(personId, x, y, faction, opts)；form 走 opts.promo。 */
+        try {
+          const mk = R.mkUnit(pid, 0, 0, "ally", { promo: form != null ? form : 0 });
+          /* mkUnit 返回 {def,x,y,faction}，spriteIdx 在 def 上（real.js:139） */
+          if (mk && mk.def && mk.def.spriteIdx != null) idx = mk.def.spriteIdx;
+        } catch (e) { idx = null; }
+      }
+      if (idx == null) idx = (p.sprite == null || p.sprite < 0) ? (0x44 + (p.cls | 0)) : (p.sprite | 0);
       const sheets = window.JW_UNIT_MOV || [];
       const url = sheets[idx];
       if (!url) return "";
@@ -916,14 +1034,9 @@
       return tbl.find(x => x && x.name === who) || null;
     }
 
-    /* 武将大图：assets/figures/fig_NNN.png
-     * 原版人物记录 +0x04 的 face 多数可直接当头像号，但资源表另有少量偏移
-     * （实测 李明 pid799 face347 → 实际 354），故留一张校正表，默认恒等。 */
+    /* 武将大图：assets/figures/fig_NNN.png（立绘号 = face + 7，见 figureIndexFor） */
     figureFor(who) {
-      const p = this._personFor(who);
-      let idx;
-      if (p && this._portraitFix[p.id] != null) idx = this._portraitFix[p.id];
-      else idx = this.faceIndexFor(who);
+      const idx = this.figureIndexFor(who);
       if (idx == null) return "";
       const n = String(idx).padStart(3, "0");
       return `<img src="assets/figures/fig_${n}.png?v=2" alt="" `
@@ -931,23 +1044,26 @@
         + `onerror="this.style.display='none'">`;
     }
 
-    /* 头像号解析（1:1）：数字按【人物 id】查 persons[pid].face，字符串按名查。
-     * 旧实现把数字直接当资源号，导致除 pid==face 外全部错位（李明 799 显示成 fig_799）。 */
-    /* 原版立绘覆盖表：个别 mod 追加人物的人群表 face 号与 Face.e5 实际段号不符，
-     * 用原版截图逐个核对后在此纠正（李明：人群表写 face=347 是男性头像，
-     * 原版开场与永安段落的画面对应的是 fig_354 的紫花头冠女性）。 */
+    /* 头像号解析（1:1）：数字按【人物 id】查 persons[pid].face，字符串按名查；
+     * Face.e5 段号 = face 直查（第 6 轮定论）。 */
     faceIndexFor(who) {
-      const OV_NAME = { "李明": 354 };
-      const OV_ID = { 799: 354 };
-      if (typeof who === "number" && OV_ID[who] != null) return OV_ID[who];
-      if (typeof who === "string" && OV_NAME[who] != null) return OV_NAME[who];
-      const tbl = (window.JW_REAL && window.JW_REAL.persons) || [];
-      let hit;
-      if (typeof who === "number") hit = tbl[who];
-      else hit = tbl.find(x => x && x.name === who);
-      if (hit && hit.face != null) return hit.face;
+      const p = this._personFor(who);
+      if (p && p.face != null) return p.face;
       /* 无档案时：数字仍当资源号兜底，字符串无解 */
       return (typeof who === "number") ? who : null;
+    }
+
+    /* 对话立绘号（原版 FUN_00407657 + Tou.dll 像素比对，第 8 轮定论）：
+     * 立绘号 = face + 7；Tou 资源 ID = 立绘号 + 301（fig_N ≡ Tou 301+N 全等）。
+     * 旧覆盖表 {李明:354} 即 face 347+7，正是缺 +7 偏移的补丁，已删。
+     * pid 0/1/4/8/35 的剧情换装特例（state 命中切固定像 214/223/224/226/227）
+     * 在默认 state=0 下同样落回 face+7，故统一 face+7。
+     * 视觉裁决（tou_offset/tou_specials.png）：诸葛亮 fig_032 羽扇纶巾、
+     * 赵云 fig_033 白甲白裘、刘禅 fig_057 冕冠、魏延 fig_034 红袍老将 ✓ */
+    figureIndexFor(who) {
+      if (typeof who === "number" && this._portraitFix[who] != null) return this._portraitFix[who];
+      const idx = this.faceIndexFor(who);
+      return idx == null ? null : idx + 7;
     }
 
     // ---- 战斗 ----
@@ -1200,6 +1316,7 @@
     handleCellClick(x, y) {
       if (!this.battle || !this.battle.map.inBounds(x, y)) return;
       if (this._moving) return;   // 行走动画期间忽略点击，避免打断/重入
+      if (this.battle._scriptPause) return;   // 开场演出/剧情对话期间禁止操作（原版演出时无指令）
       this.cursor = { x, y };
       /* 原版 0x2D test_clicked：点击角色即记录「事件槽 1 = 被点击的角色」并置点击事件标志
        * （GS+0 & 0x20）。放在点击入口而非选中，才能涵盖点敌人/友军等情况。 */
@@ -1251,10 +1368,13 @@
       this.showCursor(x, y);
       if (this.scene && this.scene.setSelection) this.scene.setSelection(u.id);
       this.updateHUD();
-      // 点击单位后统一显示指令菜单（含攻击/策略/移动/待机），
-      // 不再强制锁定移动模式，避免不移动就无法攻击或施法。
-      this.mode = "select";
-      this.showCommandMenu(u.x, u.y, u);
+      /* 经典流程（原版曹操传系）：点我方单位 → 立即亮蓝色移动范围（mode=move）；
+       * 点可达格 → 走过去 → 弹指令菜单；再点单位本体 → 直接弹指令菜单（不移动也
+       * 能攻击/施法/用道具）。修复「点完单位点格子没反应」的不能移动问题。 */
+      this.mode = "move";
+      this._moveUnit = u;
+      this._moveOrigin = { x: u.x, y: u.y };
+      this.showMoveRange(this.battle.moveRange(u));
       return;
     }
 
@@ -1543,7 +1663,12 @@
       if (!u) return;
       const cells = this.battle.moveRange(u);
       const target = cells.find(c => c.x === x && c.y === y);
-      if (!target) { this.mode = "select"; this.trySelect(u.x, u.y); return; }
+      if (!target) {
+        /* 点了不可达格：若是另一个可行动己方单位 → 改选它；否则取消 */
+        const c2 = this.battle.map.get(x, y);
+        if (c2 && c2.unit && c2.unit.faction === "ally" && !c2.unit.hasActed && c2.unit !== u) { this.mode = "select"; this.trySelect(x, y); return; }
+        this.cancelMode(); return;
+      }
       /* 原版：单位沿格子逐格走过去（不是瞬移）。先从地图算出逐格路径，
        * 播完走路动画后再由引擎落位（保证地图占用/事件只在终点触发一次）。 */
       const map = this.battle.map;
@@ -1764,6 +1889,30 @@
     }
 
     /* 战场对话立绘窗口（op 0x15 unit_say，原版在立绘窗口显示）*/
+    /* 战场选项（原版 0x0C 战斗内 choice，S_19「就此撤退/引出敌军」）：
+     * 复用剧情选项样式，挂在 battle-screen 上（2026-11-06 R9 接入）。 */
+    showBattleChoice(node, cb) {
+      this.clearBattleChoice();
+      const battleScreen = $("#battle-screen");
+      if (!battleScreen) { cb(0); return; }
+      const list = document.createElement("div");
+      list.className = "choice-list overlay-choice battle-choice";
+      list.id = "battle-choice";
+      const nums = "一二三四五六七八九";
+      (node.options || []).forEach((opt, i) => {
+        const btn = document.createElement("div");
+        btn.className = "jw-btn";
+        btn.innerHTML = `<span>${nums[i] || (i + 1)}、</span>${opt.text}`;
+        btn.addEventListener("click", (e) => { e.stopPropagation(); this.clearBattleChoice(); cb(i); });
+        list.appendChild(btn);
+      });
+      battleScreen.appendChild(list);
+      this._battleChoiceNums = (node.options || []).length;
+    }
+    clearBattleChoice() {
+      const el = document.getElementById("battle-choice");
+      if (el) el.remove();
+    }
     showBattleSay(text, unit) {
       const battleScreen = $("#battle-screen");
       if (!battleScreen) return;
@@ -1774,8 +1923,11 @@
         box.className = "battle-say";     /* 样式在 theme.css：与剧情屏同款白气泡 */
         battleScreen.appendChild(box);
       }
-      /* 原版战场对话同样是白底气泡：人名黑色加粗 + 黑色正文，不再用深色宣纸面板 */
-      const portrait = unit ? this.faceFor(unit.name) : "";
+      /* 原版战场对话同样是白底气泡：人名黑色加粗 + 黑色正文，不再用深色宣纸面板。
+       * 第 10 轮定论：气泡左侧图 = Tou.dll 120×120 对话立绘（figure），不是 Face.e5
+       * 小头像——FUN_0042cb6d→FUN_00407657(unitRec)→FUN_0040698d→LoadImageA(
+       * figure+0x12d, DAT_00500ef5=Tou.dll)；武将情报窗 0x44cbf2 同源。 */
+      const portrait = unit ? (this.figureFor(unit.pid != null ? unit.pid : unit.name) || this.faceFor(unit.name)) : "";
       const portraitHtml = portrait
         ? `<div class="bs-face">${portrait}</div>` : "";
       box.innerHTML = portraitHtml
@@ -1857,7 +2009,9 @@
       const f1 = $("#duel-f1"), f2 = $("#duel-f2");
       f1.querySelector(".duel-name").textContent = u1.name;
       f2.querySelector(".duel-name").textContent = u2.name;
-      // 原版决斗立绘：按人物表的 face 索引取 Face.e5（64×80）
+      // 第 10 轮定论：原版决斗屏两侧图 = Tou.dll 120×120 对话立绘
+      // （FUN_00443a0d 两侧各一缓存槽 DAT_00500f13/f27 → FUN_0040690c →
+      //  FUN_0040698d LoadImageA(立绘号+0x12d, Tou.dll)），非 Face.e5 小头像。
       for (const [node, unit] of [[f1, u1], [f2, u2]]) {
         if (!node || !unit) continue;
         let pv = node.querySelector(".duel-portrait");
@@ -1867,7 +2021,7 @@
           pv.style.cssText = "width:96px;height:120px;margin:0 auto 6px;display:flex;align-items:flex-end;justify-content:center";
           node.insertBefore(pv, node.firstChild);
         }
-        pv.innerHTML = this.faceFor(unit.pid != null ? unit.pid : unit.name) || "";
+        pv.innerHTML = this.figureFor(unit.pid != null ? unit.pid : unit.name) || this.faceFor(unit.name) || "";
       }
       this._dcHp = [u1.maxHp, u2.maxHp];
       f1.querySelector(".duel-hp-fill").style.width = "100%";
@@ -2341,7 +2495,10 @@
       const panel = document.createElement("div");
       panel.style.cssText = "position:fixed;inset:0;z-index:95;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center";
       const R = window.JW_REAL;
-      const items = (R && R.items ? R.items : []).filter(it => it.type >= 18 && it.type <= 80);
+      /* 1:1 原版：商店卖 JW_SHOPS[shopRec()] 的 wp+it 库存，非全物品表（2026-11-06 R8 实证） */
+      const rec = (app.shopRec && app.shopRec()) || { wp: [], it: [] };
+      const all = R && R.items ? R.items : [];
+      const items = (rec.wp || []).concat(rec.it || []).map(id => all[id]).filter(Boolean);
       panel.innerHTML = `
         <div class="jw-panel" style="padding:20px;width:min(700px,calc(100vw - 20px));min-width:0;max-height:80vh;overflow-y:auto">
           <div style="font-size:20px;color:var(--gold-bright);margin-bottom:16px;text-align:center">商店</div>
@@ -2395,9 +2552,11 @@
       if (warehouse.length === 0) {
         list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--ink-faint)">仓库为空</div>`;
       } else {
-        for (const id of warehouse) {
+        warehouse.forEach((entry, wi) => {
+          /* 装备条目可重复（同 id 多件各占一格），按下标定位（2026-11-06 R8） */
+          const id = entry.id;
           const it = R && R.items ? R.items[id] : null;
-          if (!it) continue;
+          if (!it) return;
           const row = document.createElement("div");
           row.style.cssText = "padding:8px;border-bottom:1px dashed rgba(184,134,11,0.2);display:flex;justify-content:space-between;align-items:center";
           row.innerHTML = `<span>${it.name}</span>`;
@@ -2406,11 +2565,11 @@
           btn.textContent = "卖出";
           btn.style.marginLeft = "8px";
           btn.addEventListener("click", () => {
-            if (onAction) onAction("sell", { itemId: id });
+            if (onAction) onAction("sell", { itemId: id, entryIndex: wi });
           });
           row.appendChild(btn);
           list.appendChild(row);
-        }
+        });
       }
       panel.querySelector("#wh-close").addEventListener("click", () => panel.remove());
       this.root.appendChild(panel);

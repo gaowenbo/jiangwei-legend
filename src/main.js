@@ -45,6 +45,8 @@
           }
         } else if (/^[1-9]$/.test(e.key)) {
           // 数字键选择选项（1..9）
+          const bc = document.getElementById("battle-choice");
+          if (bc) { const btns0 = bc.querySelectorAll(".jw-btn"); const ix = parseInt(e.key, 10) - 1; if (btns0[ix]) { e.preventDefault(); btns0[ix].click(); } return; }
           if (this.story && this.ui && this.ui.screen === "story" && this.story.pendingChoice) {
             e.preventDefault();
             const idx = parseInt(e.key, 10) - 1;
@@ -186,7 +188,6 @@
         this.showChapters(); // 终章等无战斗章节：跳过剧情后回章节列表
       }
     },
-
     // 1:1 剧情场景播放器（op 流 → 全屏演出：背景/立绘/字幕带/横幅/标题卡/淡入淡出/BGM/SE）
     _storyHooks(onBattleCb) {
       const ui = this.ui;
@@ -312,7 +313,6 @@
         });
       });
     },
-
     startBattle(battleCfg) {
       if (!this.current) return;
       const cfg = battleCfg || (this.current.battles && this.current.battles[0]);
@@ -329,7 +329,10 @@
       this.applyRoster(battle);
       // 无固定我方名单的战斗（S_13/S_19/S_20/S_28/S_42/S_55）：原版由出阵界面选人，
       // 这里从存档队伍自动出阵，避免整场 0 兵直接判负。
-      if (!battle.sideUnits.length) {
+      /* 修复（2026-11-06 第67轮 S_01 实证）：原版主将姜维恒在场；allies 表用 65535 空位
+       * 由出阵名单填充，我们跳过空位后 S_01 等章 sideUnits 非空但姜维缺失 →
+       * 兜底条件从「sideUnits 全空」改为「姜维不在场」（op_4b 随后会把他挪到登记位）。 */
+      if (!battle.sideUnits.some(u => u.pid === 0)) {
         const pids = this.deployRosterFallback(battle);
         this._autoDeployed = pids || [];
         this._sortieAvailable = this._autoDeployed.length > 0;
@@ -506,7 +509,6 @@
         }
       } catch (e) {}
     },
-
     handleBattleEvent(evt) {
       const b = this.battle;
       if (!b) return;
@@ -611,11 +613,29 @@
         case "unitAction":
           this.ui.refreshUnits();
           break;
+        case "unitAppear": case "unitReenter": {
+          /* 原版 op_4c 现身 / 援军再入场：此前 main 完全没接这两个事件 →
+           * buildScene 之后登场的单位（S_00 敌方 9 人、各章援军）永远没有精灵。
+           * 现在补建/刷新（2026-11-06 第66轮 截图+计数实证）。 */
+          {
+            const su = u(evt.unit);
+            if (su && su.state === 2 && su.x >= 0 && this.ui.scene) {
+              const sc = this.ui.scene;
+              if (!sc.sprites.has(su.id)) sc.createUnitSprite(su);
+              if (sc.refreshUnits) sc.refreshUnits();
+            }
+          }
+          break;
+        }
         case "unitTurn":
           this.ui.refreshUnits();
           break;
         case "unitSay":
           this.ui.showBattleSay(evt.text, u(evt.unit));
+          break;
+        case "scriptInfo":
+          this.ui.showBattleSay(evt.text, null);
+          this.ui.addLog(evt.text, "sys");
           break;
         case "unitAnim":
           if (this.ui.scene && this.ui.scene.playUnitAnim) this.ui.scene.playUnitAnim(evt.unit, evt.action);
@@ -687,7 +707,9 @@
             const it = R.items[evt.loot];
             const e2 = this.whFind(evt.loot);
             if (it.type >= 71) { if (e2 && e2.count < 99) e2.count += 1; else if (!e2) this.warehouse.push({ id: evt.loot, count: 1 }); }
-            else if (this.warehouse.length < 255) this.warehouse.push({ id: evt.loot, count: 1 });
+            else if (this.warehouse.length < 255) {
+              this.warehouse.push({ id: evt.loot, count: 1 });
+            }
             lootName = it.name;
           }
           this._lastReward = { gold, lootName, partyLv };
@@ -706,7 +728,6 @@
       // 重绘
       setTimeout(() => { this.ui.clearOverlay(); this.ui.updateHUD(); }, 50);
     },
-
     endTurn() {
       const b = this.battle;
       if (!b || b.phase !== "player") return;
@@ -827,7 +848,6 @@
       render();
       document.body.appendChild(panel);
     },
-
     finishBattle(res) {
       // 幂等：排队中的旧结算（如敌回合期间多个 600ms 延迟回调）只生效一次
       if (this.battle && this.battle.state === "end") return;
@@ -844,7 +864,6 @@
       const stats = { round: b.round, kills: b.enemies.filter(e => !e.isAlive).length, exp: 0, reward: this._lastReward || null };
       this._lastReward = null;
       this.saveRoster(); // 武将状态写回（原版跨战斗延续）
-      this._lastResult = res;
       this._lastResult = res;
       this.ui.showResult(res.result, stats, res.reason);
       if (res.result === "win") {
@@ -994,7 +1013,6 @@
       return this.chapters.length ? [this.chapters[0].id] : [];
     },
 
-    /* 跳过正在播放的决斗演出：令牌自增让 setTimeout 链静默退出，并收掉界面层 */
     /* 跳过当前决斗：既要收掉自动演出（setTimeout 链），也要收掉等待玩家点击的交互式单挑，
      * 否则剧情跑完后屏幕会一直停在 duel 上，章节不推进（ch40 卡死即此）。 */
     abortDuel() {
@@ -1016,7 +1034,6 @@
         else this.ui.showChapters();
       }
     },
-
     // ---- 决斗演出回放（1:1：脚本 duel_* 序列自动播放，非玩家操作）----
     playDuelCinematic(evt) {
       return new Promise((resolve) => {
@@ -1057,10 +1074,26 @@
           const a = op.args || [];
           // 原版 side 编号与 duel_setup 参数反序：side 0 = setup[1] = u2，side 1 = setup[0] = u1
           switch (op.name) {
-            case "duel_say": case "duel_say2":
-              ui.duelCinematicSay(a[1] != null ? String(a[1]) : String(a[0] || ""), (a[0] | 0) === 0 ? u2 : u1);
+            case "duel_say": case "duel_say2": {
+              // op0x60 duel_say [person, string]; op0x63 duel_say2 [person, string, person]
+              // 第三个参数 person（duel_say2）为实际说话人，缺省则按 side 反序：side0=u2, side1=u1
+              const speakPid = a.length >= 3 ? (a[2] | 0) : null;
+              let speaker = null;
+              if (speakPid != null && speakPid !== 65535) {
+                speaker = b.units.find(x => x.pid === speakPid) || null;
+              } else {
+                speaker = (a[0] | 0) === 0 ? u2 : u1;
+              }
+              let text = String(a[1] != null ? a[1] : (a[0] || ""));
+              // 原版 FUN_004179a5：文本中 '*' 被替换为人物名（duel 双方之一，或 duel_say2 的 person）
+              if (text.includes("*")) {
+                const name = speaker ? speaker.name : (u1 ? u1.name : "");
+                text = text.replace(/\*/g, name);
+              }
+              ui.duelCinematicSay(text, speaker);
               this._duelTimer = setTimeout(step, sayMs);
               break;
+            }
             case "duel_action": case "duel_action2": case "duel_action3": {
               const side = (a[0] | 0); // 0=u2 赵云方行动, 1=u1 姜维方行动
               const code = (a[1] | 0);
@@ -1087,6 +1120,44 @@
       });
     },
 
+    /* 原版单挑自动触发（攻击结束后，持效果26）：建立 duel 状态并显示 UI，
+     * 返回 Promise，在 duelEnd 时 resolve，攻击流程继续。 */
+    async startAutoDuel(attacker, target) {
+      if (!this.battle) return;
+      /* 1:1 原版：剧本 duel_setup 段（如 S_00 姜维vs赵云）由脚本层触发单挑演出。
+       * 当前场景存在条件满足的匹配 duel_setup 段时，直接驱动脚本链（pollEexEvents
+       * 跑完 duel_setup..duel_start 电影与后续结算），不再另开交互决斗——否则
+       * 交互决斗挂起 attack()，poll 检查点永远不到，双路径死锁（2026-11-06 实证）。 */
+      {
+        const b = this.battle;
+        const CH = (window.JW_BATTLE_EVENTS_V2 || {})[b._eexFile];
+        const sc = CH && CH.scenes && CH.scenes[b._eexScene || 0];
+        if (sc) {
+          for (const sec of sc.sections) {
+            const ds = (sec.body || []).find(op => op[0] === "duel_setup");
+            if (!ds || !b._evalSectionConds(sec.conds)) continue;
+            const dsa = ds[1] || [];
+            const p1 = dsa[0] | 0, p2 = dsa[1] | 0;
+            const pair = [attacker.pid, target.pid];
+            if ((p1 === pair[0] && p2 === pair[1]) || (p1 === pair[1] && p2 === pair[0])) {
+              await b.pollEexEvents();
+              return;
+            }
+          }
+        }
+      }
+
+      this._duel = {
+        u1: attacker, u2: target,
+        hp1: attacker.hp, hp2: target.hp,
+        turn: 1, resolved: false,
+      };
+      this.ui.showDuel(this._duel);
+      return new Promise(resolve => {
+        this._duelResolve = resolve;
+      });
+    },
+
     // ---- 决斗系统（op 60-68）----
     duelSetup(p1, p2) {
       // 两个单位都需要在地图上（state≠0）
@@ -1106,30 +1177,33 @@
       const def = side === 0 ? d.hp2 : d.hp1;
       let dmg = 0;
       if (action === 0) {
-        // 攻击：伤害 = attacker.atk - defender.def + 随机
-        dmg = Math.max(1, attacker.atk - defender.def + Math.floor(Math.random() * 10) - 4);
+        // 攻击：伤害 = attacker.atk - defender.def + 随机（防御状态减半）
+        let mul = defender._defend ? 0.5 : 1;
+        dmg = Math.max(1, Math.floor((attacker.atk - defender.def + Math.floor(Math.random() * 10) - 4) * mul));
+        defender._defend = false; // 防御仅生效一次
         if (def - dmg <= 0) {
           // 击杀
           if (side === 0) { d.hp2 = 0; d.resolved = true; this.ui.duelResult("胜", 0); }
           else { d.hp1 = 0; d.resolved = true; this.ui.duelResult("胜", 1); }
         } else {
           if (side === 0) d.hp2 = def - dmg;
-          else d.hp1 = atk - dmg;
+          else d.hp1 = def - dmg;
           this.ui.duelUpdate(d);
           this.ui.duelSay(`${attacker.name} 攻击 ${defender.name}，造成 ${dmg} 伤害`, attacker);
         }
       } else if (action === 1) {
-        // 防御：减少下次伤害
+        // 防御：下次受伤减半
+        attacker._defend = true;
         this.ui.duelSay(`${attacker.name} 进入防御姿态`, attacker);
       } else if (action === 2) {
-        // 特殊：大伤害
+        // 特殊：大伤害（不受防御影响）
         dmg = Math.max(5, attacker.atk - defender.def + Math.floor(Math.random() * 20));
         if (def - dmg <= 0) {
           if (side === 0) { d.hp2 = 0; d.resolved = true; this.ui.duelResult("胜", 0); }
           else { d.hp1 = 0; d.resolved = true; this.ui.duelResult("胜", 1); }
         } else {
           if (side === 0) d.hp2 = def - dmg;
-          else d.hp1 = atk - dmg;
+          else d.hp1 = def - dmg;
           this.ui.duelUpdate(d);
           this.ui.duelSay(`${attacker.name} 发动绝技，造成 ${dmg} 伤害！`, attacker);
         }
@@ -1151,10 +1225,11 @@
         }
       }
       this.ui.hideDuel();
+      // 单挑结束，resolve 攻击流程中的等待
+      if (this._duelResolve) { const r = this._duelResolve; this._duelResolve = null; r(); }
       this._duel = null;
       this.ui.addLog("决斗结束", "sys");
     },
-
     // ---- 战前准备（op 0x4a battle_prepare）----
     showPreBattlePrep(chapter) {
       this.ui.showPreBattlePrep(chapter, (units) => {
@@ -1304,12 +1379,14 @@
       this.gold = Math.min(9999999, this.gold - price * count);
       return { ok: true, msg: `${it.name}×${count} 花费 ${price * count} 金。` };
     },
-    sellItem(itemId, count) {
+    sellItem(itemId, count, byIndex) {
       const R = window.JW_REAL;
-      const it = R && R.items ? R.items[itemId] : null;
-      if (!it) return { ok: false, msg: "无此物品。" };
-      const e = this.whFind(itemId);
+      /* 原版仓库条目可重复（同 id 多件装备各占一格），按 id find 会卖错格；
+       * UI 传仓库下标时按 entryIndex 定位（2026-11-06 R8 实证接口不一致）。 */
+      const e = byIndex ? this.warehouse[itemId] : this.whFind(itemId);
       if (!e) return { ok: false, msg: "仓库中没有该物品。" };
+      const it = R && R.items ? R.items[e.id] : null;
+      if (!it) return { ok: false, msg: "无此物品。" };
       const price = this.sellPrice(e);
       if (price < 0) return { ok: false, msg: "此物非卖品。" };
       count = Math.min(count || e.count, e.count);
@@ -1321,13 +1398,12 @@
     showShop() {
       this.ui.showShop(this, (action, data) => {
         if (action === "buy") {
-          const res = this.buyItem(data.itemId, data.price, data.count);
+          const res = this.buyItem(data.itemId, data.count || 1);
           this.ui.addLog(res.msg, res.ok ? "heal" : "sys");
         } else if (action === "sell") {
-          const res = this.sellItem(data.itemId, data.count);
+          const res = this.sellItem(data.entryIndex, data.count || 1, true);
           this.ui.addLog(res.msg, res.ok ? "heal" : "sys");
         }
-        this.ui.showShop(this);
       });
     },
     showWarehouse() {
@@ -1336,7 +1412,7 @@
           // 使用道具（非战斗时）
           this.ui.addLog(`使用了 ${data.name}`, "heal");
         } else if (action === "sell") {
-          const res = this.sellItem(data.itemId, 1);
+          const res = this.sellItem(data.entryIndex, 1, true);
           this.ui.addLog(res.msg, res.ok ? "heal" : "sys");
           this.showWarehouse();
         }

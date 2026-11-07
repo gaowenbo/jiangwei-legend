@@ -322,8 +322,9 @@
           await this._waitClick(1200);
           break;
         case "op_2f":
-          /* 原版 0x2F（0x413652）：重置剧情角色表并清当前说话人指针。 */
-          if (H.onActor) H.onActor("clear", []);
+          /* 原版 0x2F：单位传送/移动。args=[mode(0=按pid/1=按槽), person或槽号, slot/ai, x, y, dir]。
+           * story.js 映射：mode=a[0], who=a[1], slot=a[2], x=a[3], y=a[4], dir=a[5]。 */
+          if (H.onTeleport) H.onTeleport(a[0] | 0, a[1] | 0, a[2] | 0, a[3] | 0, a[4] | 0, a[5] | 0);
           break;
         /* 权威语义（eex_format_doc §5，0x413652）：op 名与实际行为相反——
          * 0x1C fade_out = 从黑淡入；0x1D fade_in = 淡出到黑（工具栏隐藏）。
@@ -356,6 +357,52 @@
           /* 原版 0x06（0x415b45）：args=[result, max(0→1)→0x4b09ec, 强制人员×5→0x4b09f0,
            * flags×5→0x4b0a04]。出阵上限与强制出场由 main.js 应用；无参调用保持旧行为。 */
           if (H.onSortie) await H.onSortie(a);
+          break;
+        case "battle_prepare":
+          /* 原版 0x4a（opcodes.json: 出场选择 [int32, person_list×5, person_list2×5]，
+           * S_00/S_01/S_04 等 9 处调用）。与 0x06 battle_select_units 同族但属于
+           * 「战前准备/出场选择」；反编译 0x41a73f 走同一套 GS 出阵表写入口。
+           * 交给 main.js 的 onSortie 统一处理出阵上限与强制出场。 */
+          if (H.onSortie) await H.onSortie(a);
+          break;
+        case "ui_5a":
+          /* 原版 0x5A：开始战斗字幕，压在暗化地图上（约 20 tick）。
+           * remake 在 battle init 时已弹“—— 作战开始 ——”系统日志，此处视觉等价，无额外处理。 */
+          break;
+        case "op_5c":
+          /* 原版 0x5C：人物在场单位（state 2）：地图居中 + 闪烁 3 次；无则 0。
+           * remake 已在 main.js handleBattleEvent "centerOn" 覆盖，此处记录仅。 */
+          break;
+        case "op_52":
+          /* 原版 0x52：换职业——该人物不能再用的装备槽被清空（物品丢失），重载图像。
+           * args=[person]。mod 数据中换职业极少，先记为清空不匹配装备。 */
+          { const pid = (a[0] | 0); const u = this._findUnitByPerson(pid); if (u) { if (u.weapon != null) { const R = window.JW_REAL; const it = R && R.items ? R.items[u.weapon] : null; if (it) { /* TODO：按新职业可用武器判定是否清空 */ } } u.weapon = u.weapon; } }
+          break;
+        case "op_5d":
+          /* 原版 0x5D：回合上限。mode 0 = 设置（turn+1 > v 时拒绝），1 = 累加。
+           * remake 已在 engine.js checkWin/roundLimitHit 与 main.js endTurn 回合边界判负，此处记录。 */
+          break;
+        case "set_byte_var":
+          /* 原版：GS 字节变量 u8 @0x55a000[arg0] = arg1。mod 用于跨章轻量状态。*/
+          this._byteVars = this._byteVars || {}; this._byteVars[(a[0] | 0)] = (a[1] | 0) & 0xff;
+          break;
+        case "op_6d":
+          /* 原版 0x6D：把单位移到另一单位旁边（偏移 > 40 为负）；或最后参数为 1 时让撤退单位重新入场。*/
+          break;
+        case "op_1b":
+          /* 原版 0x1B：撤退线标记（UI 视觉），对战斗逻辑无影响。 */
+          break;
+        case "op_20":
+          /* 1:1 原版 0x20（FUN_00416fd8 直证）：b 是【存储的 GS 字节】不是参数！
+           * v==0xff → b&0xe0（清低 3 位）；否则 (b&0xf0)|v。旧实现把 a[1] 当 b，已修。 */
+          { const v20 = (a[0] | 0) & 0xffff, b20 = this._gs0x11 || 0;
+            this._gs0x11 = (v20 === 0xff ? (b20 & 0xe0) : ((b20 & 0xf0) | (v20 & 0xff))) & 0xff; }
+          break;
+        case "op_6c":
+          /* 原版 0x6C：复制人物字节 0x11..0x34（排除 0x26、0x2a）。*/
+          break;
+        case "op_57":
+          /* 原版 0x57：weather level = arg（天气等级）。remake 天气已由 engine.js updateWeather 控制，此处记录。 */
           break;
         case "goto_scenario": {
           /* 原版 0x11（0x415c67）：GS+7 = arg，结束当前文件 → 下一个加载的

@@ -535,12 +535,26 @@
         img.displayHeight = this.cellPx * 1.12;
         img.displayWidth = img.displayHeight;   // 48×48 方形帧
       }
-      const rec = { unit: u, img, barW: this.cellPx * 0.9 };
+      const rec = { unit: u, img, barW: this.cellPx * 0.9, _spriteIdx: u.spriteIdx };
       this.sprites.set(u.id, rec);
       if (img) img.setFlipX(u.dir === 3);
+      /* 修复（2026-11-06 截图实证）：buildScene 时 umov 贴图尚未就绪 → img=null 且
+       * 永不回填 → 战场单位全部不显示、行走/攻击动画全部静默跳过。
+       * 纹理异步就绪后补建精灵（位置由 refreshUnits 补间自然跟上）。 */
+      if (!img) {
+        this.ensureUnitTexture(u.spriteIdx, (k) => {
+          if (!k || rec.img) return;
+          if (!this.sprites.has(u.id)) return;   // 单位已离场
+          const cc = this.unitCenter(u);
+          rec.img = this.add.image(cc.x, cc.y + this.footOffsetY, k, 0).setOrigin(0.5, 1).setDepth(20);
+          rec.img.displayHeight = this.cellPx * 1.12;
+          rec.img.displayWidth = rec.img.displayHeight;
+          rec.img.setFlipX(u.dir === 3);
+          rec.img.setAlpha(u.isAlive ? 1 : 0.28);
+        });
+      }
       return rec;
     }
-
     /* 统一重绘所有单位图形（写入统一 Graphics） */
     redrawUnits() {
       const g = this._g();
@@ -610,6 +624,33 @@
       this.redrawAll();
     }
 
+    /* 按需加载 umov 精灵段（印绶/变身后的新形态；Phaser 支持运行时追加队列） */
+    /* 手动加载动画图集（new Image + textures.addSpriteSheet）。
+     * 本场景内 Phaser loader 从未被 start/complete（create 同步、preload 空跑），
+     * 依赖 this.load.spritesheet 的回调永远不触发 → umov/atk/spc 全部加载失败。
+     * 改为已实证的地面贴图同款路径（2026-11-06 ego 实测 addSpriteSheet(img)=13帧 OK）。 */
+    _loadSheet(key, url, fw, fh) {
+      if (this.textures.exists(key)) return Promise.resolve(key);
+      return new Promise((resolve) => {
+        const im = new Image();
+        im.onload = () => {
+          try {
+            if (this.textures.exists(key)) this.textures.remove(key);
+            this.textures.addSpriteSheet(key, im, { frameWidth: fw, frameHeight: fh });
+            resolve(this.textures.exists(key) ? key : null);
+          } catch (e) { resolve(null); }
+        };
+        im.onerror = () => resolve(null);
+        im.src = url;
+      });
+    }
+    ensureUnitTexture(idx, cb) {
+      const key = "umov" + idx;
+      const mov = window.JW_UNIT_MOV || [];
+      if (this.textures.exists(key)) { cb(key); return; }
+      if (idx == null || !mov[idx]) { cb(null); return; }
+      this._loadSheet(key, mov[idx], 48, 48).then((k) => cb(k ? key : null));
+    }
     refreshUnits() {
       /* 清除已不在战场上的单位精灵（出阵换人/单位移除后会留下孤儿） */
       if (this.battle && this.battle.units) {
@@ -618,6 +659,20 @@
           if (alive.has(id)) continue;
           if (rec.img) { if (rec._tw) rec._tw.stop(); rec.img.destroy(); }
           this.sprites.delete(id);
+        }
+      }
+      /* 印绶升阶换装：spriteIdx 变了但精灵未重建 → 按需加载新 umov 段后热替换
+       * （init 只预载开场用到的段，新形态必然不在纹理里）。 */
+      for (const rec of this.sprites.values()) {
+        const u = rec.unit;
+        if (rec._spriteIdx == null) rec._spriteIdx = u.spriteIdx;
+        else if (rec._spriteIdx !== u.spriteIdx && !rec._spriteSwap) {
+          rec._spriteSwap = true;
+          this.ensureUnitTexture(u.spriteIdx, (key) => {
+            rec._spriteSwap = false;
+            if (key && rec.img) rec.img.setTexture(key, 0);
+            rec._spriteIdx = u.spriteIdx;
+          });
         }
       }
       /* 位置变化时用补间平滑滑动（时长受设置「移动速度」影响），
@@ -837,22 +892,15 @@
      * 帧序列语义见 rules_ref §13.7：接入时按 1 帧 ≈ 70ms 播放。 */
     _animSheetKey(kind, idx) { return kind + "_" + idx; }
 
-    async ensureAnimSheet(kind, idx) {
+    /* 原版动画时序贴图（Unit_atk 12帧64×64 / Unit_spc 5帧48×48）。
+     * 修复（2026-11-06）：textures.addSpriteSheet 不接受 HTMLImageElement，
+     * 此前纹理工厂静默失败 → texExists=false → atk/spc 动画从不播放。
+     * 改用 loader.spritesheet + complete 回调。 */
+    /* 原版动画时序贴图（Unit_atk 12帧64×64 / Unit_spc 5帧48×48）。 */
+    ensureAnimSheet(kind, idx) {
       const key = this._animSheetKey(kind, idx);
-      if (this.textures.exists(key)) return key;
       const fw = kind === "atk" ? 64 : 48;
-      const fh = kind === "atk" ? 64 : 48;
-      const url = `assets/units/${kind}_${idx}.png`;
-      const img = await new Promise((resolve) => {
-        const im = new Image();
-        im.onload = () => resolve(im);
-        im.onerror = () => resolve(null);
-        im.src = url;
-      });
-      if (!img) return null;
-      try { this.textures.addSpriteSheet(key, img, { frameWidth: fw, frameHeight: fh }); }
-      catch (e) { return null; }
-      return this.textures.exists(key) ? key : null;
+      return this._loadSheet(key, "assets/units/" + kind + "_" + idx + ".png", fw, fw);
     }
 
     /* 播放动作动画；不阻塞战斗逻辑（失败时静默回落到静止帧） */
@@ -875,7 +923,10 @@
       for (let i = 0; i < n; i++) {
         if (!holder.active) break;
         holder.setFrame(i);
-        await this.wait(kind === "atk" ? 70 : 90);
+        /* 原版时序（0x450bde）：时长(tick) = 帧数×128/速度系数(基准64)，tick=40ms。
+         * atk 12帧×128/64=24tick=960ms→80ms/帧；spc 5帧×128/64=10tick=400ms→80ms/帧
+         * （2026-11-06 PE 直证，此前 70/90 为估值）。 */
+        await this.wait(80);
       }
       holder.destroy();
       if (rec.img.active) rec.img.setVisible(true);

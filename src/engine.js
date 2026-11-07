@@ -26,15 +26,7 @@
 
   // ---------- 策略伤害 power 表（table 0x43c31e，1:1 逆向；键为策略 id，取自 EXE 实测） ----------
   // 73 项，索引 0..72，超出按 0 处理（不伤害）
-  const STRAT_POWER = {
-    0: 70, 1: 90, 2: 50, 3: 70, 4: 90,   // 火系
-    5: 70, 6: 90, 7: 50, 8: 70, 9: 28,   // 水系
-    10: 50, 11: 70, 12: 40, 13: 50, 14: 20, // 风系
-    15: 70, 16: 90, 17: 70, 18: 90, 19: 120, // 地系
-    20: 70, 22: 28, 33: 50, 34: 28, 35: 28, 36: 28,
-    38: 28, 64: 70, 65: 100, 66: 28, 67: 28, 68: 28,
-    // 其余为 0（无伤害策略）
-  };
+  const STRAT_POWER = [70,90,50,70,90,70,90,50,70,28,50,70,40,50,20,70,90,70,90,120,70,28,50,28,28,28,28,28,28,28,28,28,28,70,40,50,20,28,120,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,70,100,28,28,0,0,0,0,0]; /* EXE 直证 @0x43c31e[73]，2026-11-06 PE 提取（原对象表 21/22/33-38/64-66 错位，已按真值数组替换；sid>0x48=72 不读表=0，@0x43c101） */
   // 兵种修正表 0x4d21b0[40]，按目标兵种 id 索引，100=无修正
   const STRAT_CLASS_MOD = [
     90, 100, 100, 100, 100, 100, 100, 100, 90, 90,
@@ -678,8 +670,11 @@
       const R = window.JW_REAL;
       const oldCls = R.classes[this.clsId] || R.classes[0];
       const newCls = R.classes[newClsId] || R.classes[0];
-      if (this.lvl < newCls.promoteLevel || newCls.promoteLevel === undefined) {
-        return { ok: false, msg: `下一个兵种需要等级${newCls.promoteLevel}以上。` };
+      /* 1:1 原版 FUN_0041d430 印绶门槛：下一阶需要 (当前cls%3+1)*20 级（20/40），
+       * 不查 class 表 promoteLevel（游戏数据里多数类缺该字段，旧写法报 undefined）。 */
+      const needLv = (this.clsId % 3 + 1) * 20;
+      if (this.lvl < needLv) {
+        return { ok: false, msg: `下一个兵种需要等级${needLv}以上。` };
       }
       // HP/MP base + 2×旧class growth
       this.maxHp += 2 * (oldCls.hpGrow || 0);
@@ -1129,7 +1124,13 @@
       const cell = this.map.get(x, y);
       const tid = cell ? cell.tid : undefined;
       if (tid === undefined || tid === 0xff || !unit || !unit.terrEffect || !unit.terrEffect.length) return 10;
-      const v = unit.terrEffect[tid];
+      /* 原版 0x43f7c3（@0x43f847-0x43f860）防御系数 tid 别名映射：
+       *   浅滩9/沼泽10 → 池塘11 系数；雪原7/大河13 → 小河12 系数
+       *   （2026-11-06 capstone 直证，此前缺失） */
+      let tid2 = tid;
+      if (tid === 9 || tid === 10) tid2 = 11;
+      else if (tid === 7 || tid === 13) tid2 = 12;
+      const v = unit.terrEffect[tid2];
       return (v === undefined || v === 255) ? 10 : v;
     }
     // 武器特效（原版 special 表；伤害/命中类先落地，语义按 dis 资料推断标注）
@@ -1187,6 +1188,14 @@
         // ⑦ 追伤（FUN_00478f08 实证，仅普通攻击）：攻方 special==107 黄龙升天刀
         dmg += this._chargeFollowupDmg(attacker, defender, dmg);
       }
+      // 天气/地形加成（EXE FUN_0044a1d4，table 0x48e100）：仅天气>=4（雪天）时应用
+      const w = this.weather !== undefined ? this.weather : 0;
+      if (w >= 4) {
+      const tId = defender.tid !== undefined ? defender.tid : 0;
+        const col = Math.min(5, Math.max(0, tId));
+        const modVal = Battle.WEATHER_TERRAIN_MOD[w][col];
+        if (modVal) dmg += Math.floor(dmg * modVal / 100);
+      }
       if (noRandom) return Math.max(1, dmg);
       const r = U.rnd(0, 6);                     // rand(7)：r>2 → +r-2，r≤2 → -r(0→1)
       dmg = r > 2 ? dmg + r - 2 : Math.max(dmg - r, 0);
@@ -1202,17 +1211,17 @@
       const a = attacker.bSpd != null ? attacker.bSpd : attacker.spd, d = defender.bSpd != null ? defender.bSpd : defender.spd;
       let h;
       if (a >= 2 * d) h = 100;
-      else if (a >= d) h = Math.floor((a - d) * 10 / d) + 90;
+      else if (a >= d) h = Math.floor((a - d) * 10 / d) + 90;   /* EXE FUN_0043b50c 三段式第二段：防方<=攻方<防方×2 → (a-d)*10/d+90 */
       else if (a >= (d >> 1)) h = Math.floor((a - (d >> 1)) * 30 / (d >> 1)) + 60;
       else { const half = Math.floor(d / 3); h = half > 0 ? Math.floor(Math.max(0, a - half) * 30 / half) + 30 : 30; }
-      /* 效果修正（1:1 原版 FUN_0043b50c 尾段：FUN_0047fa89=min(h+v,cap)、FUN_0047fa9e=max(h−v,0)。
-       * 2026-11-04 key 判据修正——判据取 FUN_004cf398 第 2 参（special）：
-       *   - (0x1e, 0x23)：special==35 飞景/鹤氅 → 必中 100（旧绑 30 乾象历注为 id 误读）
-       *   - (0x1f, 0x2f)：special==47 → 命中 +v（本 mod 无物品，死码对齐）
-       *   - (0x20, 0x3d)：special==61 → 命中 −v（无物品，死码对齐） */
-      if (attacker.hasEffect && attacker.hasEffect(35)) return 100;
-      if (attacker.hasEffect && attacker.hasEffect(47)) h = Math.min(h + attacker.effectValue(47), 100);
-      if (attacker.hasEffect && attacker.hasEffect(61)) h = Math.max(h - attacker.effectValue(61), 0);
+      /* 效果修正（EXE FUN_0043b50c 尾段：FUN_0047fa89=min(h+v,100)、FUN_0047fa9e=max(h−v,0)；
+       * 判据取 FUN_004cf398 第 2 参（special）：
+       *   - key 0x1e(30)：special==30 → 必中 100
+       *   - key 0x1f(31)：special==31 → 命中 +v（青釭剑系）
+       *   - key 0x20(32)：special==32 → 命中 −v */
+      if (attacker.hasEffect && attacker.hasEffect(30)) return 100;
+      if (attacker.hasEffect && attacker.hasEffect(31)) h = Math.min(h + attacker.effectValue(31), 100);
+      if (attacker.hasEffect && attacker.hasEffect(32)) h = Math.max(h - attacker.effectValue(32), 0);
       return U.clamp(h, 0, 100);
     }
     // 策略命中：1:1 原版 StratHitRate 0x43b73f（精神+士气，4 段曲线 × 每策略系数）
@@ -1269,13 +1278,16 @@
      * 应用（FUN_00405de1 实测）：触发后 伤害 += 伤害×(曲线值+100)/2/100；
      * 防御方持 special==65（黄金连环铠，FUN_00405dcf key='A'）→ 会心加成不施加且伤害清 0（会心格挡）。 */
     critRate(attacker, defender) {
-      const m = attacker.bHit != null ? attacker.bHit : attacker.hit, n = defender.bHit != null ? defender.bHit : defender.hit;
+      /* EXE FUN_00405d5b：会心率 = 曲线 FUN_00405d0a(防方士气 stat4, 攻方士气 stat4)。曲线值越高越会心。
+       * 输入取士气（stat4/士气，非命中 hit），方向：攻方士气越高会心率越高。 */
+      const morale = (u) => Math.max(1, (u.bHit != null ? u.bHit : u.hit) || 1);
+      const a = morale(attacker), d = morale(defender);
       let r;
-      if (m >= 3 * n) r = 100;
-      else if (m >= 2 * n) r = Math.floor((m - 2 * n) * 80 / n) + 20;
-      else if (m >= n) r = Math.floor((m - n) * 18 / n) + 2;
-      else r = 2;
-      if (attacker.hasEffect && attacker.hasEffect(49)) r += 100;
+      if (a >= 3 * d) r = 100;
+      else if (a >= 2 * d) r = Math.floor((a - 2 * d) * 80 / d) + 20;
+      else if (a >= d) r = Math.floor((a - d) * 18 / d) + 2;
+      else r = 1;
+      if (attacker.hasEffect && attacker.hasEffect(49)) r += 100;   /* 致命一击 special 49 → 曲线值+100（必定加成段） */
       return r;
     }
     /* 连击率：1:1 原版 FUN_00405cb0（0x405ce6 为其内部地址）
@@ -1313,8 +1325,9 @@
       const J = target.bMag != null ? target.bMag : target.mag;
       // 基础伤害 = 等级 + 25（原版 EXE 实测，非 45）
       let dmg = (caster.lvl || 1) + 0x19;
-      if (I >= J) dmg += (I - J) / 3;
-      else dmg = Math.max(dmg - (J - I) / 3, 0);
+      /* 原版 @0x43c11e..0x43c147：整数 DIV 3（截断），非浮点 */
+      if (I >= J) dmg += Math.floor((I - J) / 3);
+      else dmg = Math.max(dmg - Math.floor((J - I) / 3), 0);
       dmg = Math.floor(dmg * power / 100);
       // 目标族修正：0x4d21b0[族]（FUN_004077d0 = 族索引，非兵种）
       const R2 = window.JW_REAL;
@@ -1330,7 +1343,20 @@
        * 施法者 FUN_004cf398(caster,0x28,'8',1,0) → key=0x38(56) 破凰凤羽扇 → dmg += dmg×v/100；
        * 目标   FUN_004cf398(target,0x29,'C',1,0) → key=0x43(67) 梅花亮银铠 → dmg −= dmg×v/100（下限0）；
        * 施法者 FUN_00405dbd → key=0x37(55) 琉璃七宝刀 → dmg += dmg×v/100。
-       * 天气/地形加成段（FUN_0044270c 上下文 +20%/+25%）条件未全证，暂不移植。 */
+       * 天气/地形加成（EXE FUN_0044a1d4，table 0x48e100，6×6：行=天气0-5，列=地形tid0-5；
+       * FUN_004cf694(dmg, modVal) = dmg×modVal/100，累加）。table 值：
+       *   晴 [0,0,0,1,2,3]  阴 [0,0,0,0,1,2]  雨 [0,1,2,2,3,3]
+       *   暴雨 [0,0,1,1,4,4] 雪 [0,1,4,4,4,4]  未知5 [0,0,189,225,202,248] */
+      const WEATHER_TERRAIN_MOD = [
+        [0,0,0,1,2,3], [0,0,0,0,1,2], [0,1,2,2,3,3],
+        [0,0,1,1,4,4], [0,1,4,4,4,4], [0,0,189,225,202,248]
+      ];
+      const tId = target.tid !== undefined ? target.tid : 0;
+      const w = this.weather !== undefined ? this.weather : 0;
+      const col = Math.min(5, Math.max(0, tId));
+      const row = Math.min(5, Math.max(0, w));
+      const modVal = Battle.WEATHER_TERRAIN_MOD[row][col];
+      if (modVal) dmg += Math.floor(dmg * modVal / 100);
       if (caster.hasEffect && caster.hasEffect(56)) dmg += Math.floor(dmg * caster.effectValue(56) / 100);
       if (target.hasEffect && target.hasEffect(67)) dmg = Math.max(dmg - Math.floor(dmg * target.effectValue(67) / 100), 0);
       if (caster.hasEffect && caster.hasEffect(55)) dmg += Math.floor(dmg * caster.effectValue(55) / 100);
@@ -1394,47 +1420,25 @@
         }
         return { dmg: out, crit, hit: true };
       }
-      let base;
-      if (skill && skill.type === "damage") {
-        base = attacker.effectiveAtk + attacker.mag + skill.power;
-      } else {
-        base = attacker.effectiveAtk + (attacker.weaponBonus?.atk || 0);
-      }
-      const defVal = defender.effectiveDef;
-      // 兵种克制
-      const counter = D.COUNTER[attacker.def.class + ":" + defender.def.class] || 1;
-      // 地形加成（真实地形 def=1，修正来自族表）
-      const terr = this.map.terrain(defender.x, defender.y);
-      let terrMult = terr ? terr.def : 1;
-      let terrAvoid = terr ? (terr.avoid || 0) : 0;
-      if (terr && terr.real && defender.tid !== undefined) {
-        const cell = this.map.get(defender.x, defender.y);
-        const tid = cell && cell.tid;
-        if (tid !== undefined && defender.avoidTerr && defender.avoidTerr.length) {
-          const av = defender.avoidTerr[tid];
-          if (av !== undefined && av !== 255) {
-            terrAvoid = Math.round((10 - av) * 10); // 原版命中修正：10=基准，族表给的是%10单位
-          }
+      /* EXE FUN_0043bc62：始终走完整物理伤害公式，不再因缺 terrEffect 而走简化公式。
+       * 技能伤害：物理技能按威力叠加（EXE 非策略技能按各自公式，此处近似）。 */
+      let dmg = this.physicalDamage(attacker, defender, mode || 0);
+      if (skill && skill.type === "damage" && skill.power != null) dmg += skill.power | 0;
+      const hit = Math.random() * 100 < this.hitRate(attacker, defender);
+      if (!hit) return { dmg: 0, crit: false, hit: false };
+      /* 会心（FUN_00405de1 实测）：roll(曲线值) 通过（致命一击 → critRate 已含 +100 必定）→
+       * 伤害 += 伤害×(曲线值+100)/2/100。FUN_00405de1 仅在第一段(local_8==0)判定会心，多段连击后续段不加成。 */
+      const cr = this.critRate(attacker, defender);
+      const curve = cr >= 101 ? cr - 100 : cr;   // 剥离致命一击的 +100
+      const crit = cr >= 101 || (Math.random() * 100 < curve);
+      let out = dmg;
+      if (crit) {
+        if (defender.hasEffect && defender.hasEffect(65)) {
+          return { dmg: 0, crit: true, hit: true, parried: true };   // 会心格挡
         }
+        out = dmg + Math.floor(dmg * ((curve + 100) >> 1) / 100);
       }
-      // 元素克制（简化：火>木>水>火）
-      let elem = 1;
-      if (skill && skill.element) {
-        const elemMap = { fire: 1.2, thunder: 1.1, ice: 1.1, wind: 1.05 };
-        elem = elemMap[skill.element] || 1;
-        if (defender.def.class === "rattan" && skill.element === "fire") elem = 0.2;
-      }
-      let dmg = (base - defVal * terrMult) * counter * elem;
-      dmg += U.rnd(0, Math.max(5, Math.round(base * 0.15)));
-      // 会心
-      let crit = false;
-      const critChance = 0.05 + (attacker.spd - defender.spd) * 0.002;
-      if (Math.random() < U.clamp(critChance, 0.02, 0.25)) { dmg *= 1.5; crit = true; }
-      // 命中
-      let hitChance = (attacker.hit + (skill ? 10 : 0)) - defender.spd * 0.3 - (terr?.avoid || 0);
-      hitChance = U.clamp(hitChance, 20, 99);
-      const hit = Math.random() * 100 < hitChance;
-      return { dmg: Math.max(1, Math.round(dmg)), crit, hit };
+      return { dmg: out, crit, hit: true };
     }
 
     /* 攻击指令包装（§12.1 0x4d7808）：触发【技】横幅 → 目标抢先反击 → 煞连击。
@@ -1573,6 +1577,13 @@
           continue;
         }
         target.damage(calc.dmg);
+        // 引导攻击（§12.1 特殊57 白羽扇/华铤）：目标死亡后，攻击者在射程内链击最近存活敌
+        if (calc.dmg > 0 && !target.isAlive && attacker.hasEffect && attacker.hasEffect(57)) {
+          const next = this.guidedAttack(attacker, target);
+          if (next && next.isAlive && this.inRange(attacker, next)) {
+            await this.attackOnce(attacker, next, null, false, cDepth + 1);
+          }
+        }
         // §8.4 武器经验：造成伤害 → (La>Lt?2:3)；无伤害 → 1
         {
           const La = attacker.lvl || 1, Lt = target.lvl || 1;
@@ -1646,6 +1657,15 @@
       }
       // 攻击消耗行动
       if (!skill) attacker.hasActed = true;
+
+      /* 原版单挑触发（FUN_00438eba / 0x43ff54）：攻击结束后，若攻击者持效果 26（饰品 type==id，如凤凰羽衣）
+       * 且目标存活，立即进入单挑——不是等回合结束。单挑结束后返回原回合流程。 */
+      if (!skill && target.isAlive && attacker.hasEffect && attacker.hasEffect(26)) {
+        const H = typeof window !== "undefined" && window.JW && window.JW.App;
+        if (H && H.startAutoDuel) {
+          await H.startAutoDuel(attacker, target);
+        }
+      }
     }
 
     // 目标 u2 是否在 u1 攻击范围内（形状表 §6.1）
@@ -1669,7 +1689,8 @@
       const cat = R.catOf(sid);
       // cat 0-3：元素地形过滤（effect 50 左思兵法豁免）
       if (cat >= 0 && cat <= 3) {
-        if (!R.elemTerrainOK(skill, target ? this.map.get(target.x, target.y).tid : null, caster.hasEffect && caster.hasEffect(50))) return false;
+        const tcell = target ? this.map.get(target.x, target.y) : null;
+        if (!R.elemTerrainOK(skill, tcell ? tcell.tid : null, caster.hasEffect && caster.hasEffect(50))) return false;
       }
       if (isAI) {
         // AI 专用检查
@@ -1962,21 +1983,58 @@
       // 原版物品范围 = Jiqi.wa[+0xc]（0xff→0x10）；此处默认相邻 1
       return 1;
     }
+    /* 物品效果：1:1 原版 FUN_0041dc40 按 type 分派（0x47..0x54），数值取物品记录 base(+0x15)：
+     *   71 豆/麦/米 → 回HP（base 50/120/255）        72 山泉水/杜康酒 → 回MP（base 40/80）
+     *   73 正气丸 → 清 0x08 混乱                      74 解毒散 → 清 0x10 中毒
+     *   75 活血草 → 清 0x02 麻痹                      76 醒脑丸 → 清 0x04 穷计
+     *   77 碧灵丹 → 清 0x1e（麻+穷+毒，不清乱/怯/迷）
+     *   78 武勇果→攻 79 智慧果→精 80 精壮果→防 81 敏捷果→速 82 好运果→命（各+1，上限100）
+     *   83 经验果 → 经验 +base(150)                   84 印绶 → 兵种 class+1
+     * 状态位映射由 FUN_0041ce09（'I'/'J'/'K'/'L'/'M' → 8/0x10/2/4/0x1e）与
+     * FUN_0041d09f（case 0x4e..0x52 → 能力 idx 0/2/1/3/4）双处实证。 */
     itemEffect(itemId) {
       const R = window.JW_REAL;
       const it = R && R.items ? R.items[itemId] : null;
       if (!it) return { kind: "none" };
-      const t = it.type;
-      if (t === 71) return { kind: "heal_hp", amt: it.sval || 50 };
-      if (t === 72) return { kind: "heal_mp", amt: it.sval || 40 };
-      if (t === 73) return { kind: "heal_hp", amt: 60 };
-      if (t === 74 || t === 75) return { kind: "cure", mask: 0x12 };
-      if (t === 76) return { kind: "cure", mask: 0x48 };
-      if (t === 77) return { kind: "all_up" };
+      const t = it.type, amt = it.base || 0;
+      if (t === 71) return { kind: "heal_hp", amt: amt || 50 };
+      if (t === 72) return { kind: "heal_mp", amt: amt || 40 };
+      if (t === 73) return { kind: "cure", mask: 0x08 };
+      if (t === 74) return { kind: "cure", mask: 0x10 };
+      if (t === 75) return { kind: "cure", mask: 0x02 };
+      if (t === 76) return { kind: "cure", mask: 0x04 };
+      if (t === 77) return { kind: "cure", mask: 0x1e };
       if (t === 78) return { kind: "fruit", stat: "atk" };
       if (t === 79) return { kind: "fruit", stat: "mag" };
-      if (t === 80) return { kind: "fruit", stat: "spd" };
+      if (t === 80) return { kind: "fruit", stat: "def" };
+      if (t === 81) return { kind: "fruit", stat: "spd" };
+      if (t === 82) return { kind: "fruit", stat: "hit" };
+      if (t === 83) return { kind: "exp", amt: amt || 150 };
+      if (t === 84) return { kind: "promote" };
       return { kind: "none" };
+    }
+    /* 可用性检查：1:1 原版 FUN_0041c4e9（执行路径 param_3=0）+ FUN_0041d430（印绶）。
+     * 状态药（73..77）在执行时不拦截（无状态也可吃，只是无效）；经验果要求经验 ≤98；
+     * 印绶要求 class<60、class%3≠2（已是本族顶阶）、(class%3+1)*20 ≤ 等级。 */
+    canUseItem(itemId, target) {
+      const R = window.JW_REAL;
+      const it = R && R.items ? R.items[itemId] : null;
+      if (!it || !target) return { ok: false, msg: "无法使用" };
+      const t = it.type;
+      if (t === 83 && (target.exp || 0) > 98) return { ok: false, msg: "经验值已满，不能使用。" };
+      if (t === 84) {
+        const c = target.clsId | 0;
+        if (c >= 60) return { ok: false, msg: "该兵种无法再提升。" };
+        if (c % 3 === 2) return { ok: false, msg: "该兵种无法再提升。" };
+        if ((c % 3 + 1) * 20 > (target.lvl || 1)) {
+          return { ok: false, msg: `下一个兵种需要等级${(c % 3 + 1) * 20}以上。` };
+        }
+      }
+      if (t >= 78 && t <= 82) {
+        const stat = this.itemEffect(itemId).stat;
+        if ((target[stat] | 0) >= 100) return { ok: false, msg: "该项能力已经达到100，不能再提升了。" };
+      }
+      return { ok: true };
     }
     useItem(caster, itemId, target) {
       if (!caster.isAlive) return { ok: false, msg: "已阵亡" };
@@ -1996,15 +2054,47 @@
       if (dist > this.itemUsableRange(itemId, caster)) return { ok: false, msg: "不在范围之内。" };
       const eff = this.itemEffect(itemId);
       if (eff.kind === "none") return { ok: false, msg: "无法使用" };
+      /* 前置可用性（1:1 原版 FUN_0041c4e9 执行路径 / FUN_0041d430 印绶）：
+       * 经验>98 拒经验果；兵种到顶/等级不足拒印绶；能力=100 拒果实。 */
+      const chk = this.canUseItem(itemId, target);
+      if (!chk.ok) return chk;
       // 应用
       if (eff.kind === "heal_hp") { target.heal(eff.amt); }
       else if (eff.kind === "heal_mp") { target.mp = U.clamp(target.mp + eff.amt, 0, target.maxMp); }
       else if (eff.kind === "cure") { target.clearStatusBits(eff.mask); }
       else if (eff.kind === "all_up") { target.hp = target.maxHp; target.mp = target.maxMp; target.clearStatusBits(0x7e); }
       else if (eff.kind === "fruit") {
-        const cap = { atk: 100, mag: 100, spd: 100 };
+        const cap = { atk: 100, mag: 100, def: 100, spd: 100, hit: 100 };
         if (target[eff.stat] >= cap[eff.stat]) return { ok: false, msg: "该项能力已经达到100，不能再提升了。" };
         target[eff.stat] = Math.min(target[eff.stat] + 1, cap[eff.stat]);
+      }
+      else if (eff.kind === "exp") {
+        /* 经验果 base=150（game_data id103），走统一 gainExp（100/级，70级封顶） */
+        const up = target.gainExp ? target.gainExp(eff.amt) : null;
+        if (up) {
+          if (this.onEvent) this.onEvent({ type: "levelUp", unit: target.id, lvl: up.lvl, learnedNew: up.learnedNew });
+          this.logEntry(`${target.name} 升至 ${up.lvl} 级！`, "sys");
+        }
+      }
+      else if (eff.kind === "promote") {
+        /* 印绶：class+1（promoteClass 内部再校验等级与 growth/HP/MP/新策略） */
+        const pr = target.promoteClass ? target.promoteClass(target.clsId + 1) : { ok: false, msg: "无法提升" };
+        if (!pr.ok) return pr;
+        /* 战斗精灵同步：promo = clamp(新clsId - 人物基础cls, 0, 2)，
+         * 走 real.js mkUnit 权威 spriteIndex（ov 覆盖表分支不受 promo 影响，重算无害）。 */
+        if (target.pid != null) {
+          const R = window.JW_REAL;
+          const p = (window.JW_GAME && window.JW_GAME.persons) ? window.JW_GAME.persons[target.pid] : null;
+          if (R && R.mkUnit && p) {
+            const promo = Math.max(0, Math.min(2, target.clsId - (p.cls | 0)));
+            try {
+              const mk = R.mkUnit(target.pid, 0, 0, target.faction, { promo, lv: target.lvl });
+              if (mk && mk.def && mk.def.spriteIdx != null) target.spriteIdx = mk.def.spriteIdx;
+            } catch (e) {}
+          }
+        }
+        if (this.onEvent) this.onEvent({ type: "classChange", unit: target.id, cls: target.clsId });
+        this.logEntry(pr.msg, "sys");
       }
       // 消耗（包内直接移除；仓库则减 1）
       if (whEntry) { whEntry.count -= 1; if (whEntry.count <= 0 && app) app.warehouse = app.warehouse.filter(e => e !== whEntry); }
@@ -2061,6 +2151,13 @@
       this.logEntry(`${u.name}: ${text}`, "dialog");
       if (this.onEvent) this.onEvent({ type: "unitSay", unit: u.id, text });
     }
+
+    // 天气/地形修正表（EXE DAT_0048e100，6×6：行=天气0-5，列=地形tid0-5；
+     // EXE FUN_004cf694(dmg, modVal) = dmg*modVal/100，累加到伤害）
+    static WEATHER_TERRAIN_MOD = [
+      [0,0,0,1,2,3], [0,0,0,0,1,2], [0,1,2,2,3,3],
+      [0,0,1,1,4,4], [0,1,4,4,4,4], [0,0,189,225,202,248]
+    ];
 
     // ---- 天气系统（0x44a1d4, table 0x48e100）----
     // weather: 0晴 1阴 2雨 3暴雨 4雪
@@ -2626,6 +2723,9 @@
           if (!this._clickEvent) return false;
           return (this._clickedActor | 0) === (a[0] | 0);
         }
+        /* 原版 0x0C 战斗内 choice 的结果寄存器（Reader+0x2038 同族，lastChoice=idx+1）；
+         * S_19 战斗选项分支用（2026-11-06 R9 接入战斗层）。 */
+        case "test_choice": return (this._lastChoice | 0) === (a[0] | 0);
         case "test_victory": return false; // 由引擎胜负判定接管
         case "test_defeat": return false;
         default: return false;
@@ -2648,13 +2748,49 @@
       }
       return out;
     }
-        async _runActions(actions, label) {
+        /* 战斗脚本 IF 条件求值（op 0x05 test_flags 直证：set 全置位且 clear 全未置位） */
+    _evalBattleCond(c) {
+      if (!c) return true;
+      if (c.name === "test_flags") {
+        const set = c.args[0] || [], clr = c.args[1] || [];
+        return set.every(id => !!this._scriptFlags[id]) && clr.every(id => !this._scriptFlags[id]);
+      }
+      return true; /* comment/choice 等保守通过 */
+    }
+    /* 1:1 FUN_0041885a：敌方等级基准 = 我方等级表降序前 min(4,n) 人均值（min 1） */
+    _partyLevelBase() {
+      const App = (typeof window !== "undefined" && window.JW && window.JW.App) ? window.JW.App : null;
+      const lvs = [];
+      if (App && App.roster) for (const k of Object.keys(App.roster)) { const r = App.roster[k]; if (r && r.lvl) lvs.push(r.lvl | 0); }
+      if (!lvs.length) for (const u of this.units) if (u.faction === "ally" && u.isAlive && u.lvl) lvs.push(u.lvl);
+      if (!lvs.length) return 1;
+      lvs.sort((x, y) => y - x);
+      const top = Math.min(4, lvs.length);
+      let s = 0; for (let i = 0; i < top; i++) s += lvs[i];
+      return Math.max(1, Math.round(s / top));
+    }
+    async _runActions(actions, label) {
       // 原版 if 分支：条件不满足的分支应跳过。我们没有实现全部条件码，
       // 退而求其次：部署/设定/演出类 op 只执行第一次出现（各分支互为替代）。
       const ONCE_OPS = new Set(["battle_allies", "battle_enemies", "battle_equipment", "battle_settings", "battle_init", "op_4b", "change_scene", "fade_out", "fade_in"]);
       const seenText = new Set();
-      for (const o of actions) {
+      /* 1:1 索引走法：op1 IF（cond 真→顺行 child，假→跳到 end）、op3 ELSE（前一 IF 被跳才执行）、
+       * op0 END 仅作块尾标记。S_00 开场的 flag1001 双变体即靠它选择。 */
+      let _lastIfSkipped = false;
+      for (let oi = 0; oi < actions.length; oi++) {
+        const o = actions[oi];
         const a = o.args || [];
+        if (o.name === "if" || o.op === 1) {
+          const ok = this._evalBattleCond(o.cond);
+          _lastIfSkipped = !ok;
+          if (!ok && o.end != null) { oi = o.end - 1; }
+          continue;
+        }
+        if (o.name === "else" || o.op === 3) {
+          if (!_lastIfSkipped && o.end != null) { oi = o.end - 1; }
+          continue;
+        }
+        if (o.name === "end" || o.op === 0) continue;
         if (ONCE_OPS.has(o.name)) {
           const key = o.name === "battle_equipment" ? "beq" : o.name;
           if (this["_once_" + key]) continue;
@@ -2697,7 +2833,7 @@
                 if (cell && cell.unit === u) cell.unit = null;
                 u.state = 0;            // 剧本移出战场：不进入"撤退/阵亡"统计
                 u.x = -1; u.y = -1;
-                if (pid === 25) this._scriptFlags.zhaoRemoved = true;
+                if (pid === 25) { this._scriptFlags.zhaoRemoved = true; this._scriptFlags.event5 = true; }
                 if (this.onEvent) this.onEvent({ type: "scriptRemove", person: pid });
               }
             } else {
@@ -2749,9 +2885,11 @@
            * [x1, y1, x2, y2, person]（第 5 参是 0xffff→0 的人物槽，非 flag）。
            * 记下目标区域，地图居中到中点并闪 3 次，用于「到达指定地点」类目标。 */
           case "op_5b": {
+            /* 1:1 FUN_00416cbb：[x1,y1,x2,y2(type4), person(type26)]；0xffff→0；
+             * positive = (person==0)（DAT_004b3d10）；居中=区域中点+矩形闪 3 次（FUN_0045a0ce 直证）。 */
             const x1 = a[0] | 0, y1 = a[1] | 0, x2 = a[2] | 0, y2 = a[3] | 0;
-            const flag = a[4] !== undefined && a[4] !== 65535 ? (a[4] | 0) : 0;
-            this.targetArea = { x1, y1, x2, y2, positive: flag === 0 };
+            const person = a[4] !== undefined && a[4] !== 65535 ? (a[4] | 0) : 0;
+            this.targetArea = { x1, y1, x2, y2, person, positive: person === 0 };
             const cx = Math.floor((x1 + x2) / 2), cy = Math.floor((y1 + y2) / 2);
             const cells = [];
             for (let yy = Math.min(y1, y2); yy <= Math.max(y1, y2); yy++)
@@ -2802,37 +2940,59 @@
             if (this.onEvent) this.onEvent({ type: "scriptStatus", unit: u.id });
             break;
           }
-          /* 原版 0x6D（0x410cfc，5 处）：把单位移到另一单位旁边（偏移 > 40 视为负）；
-           * 或最后参数为 1 时让撤退的单位重新入场。 */
+          /* 1:1 op 0x6D = FUN_00410d21（旧注 0x410cfc 是 0x6C 函数体内地址，作废）。
+           * 签名表 DAT_00484ac8 = [40 02 04 02 04 04 2b 26]，与 opcodes.json 互证：
+           * [select, uid, deployIdx, anchorUid, dx, dy, dir(0xffff=保持), style(1走/0跳)]。
+           * 实测 5 用全为 [0,X,0,Y,0,0,65535,0]：援军 X 落到 Y 旁。坐标 >40 回绕（模 41）。 */
           case "op_6d": {
-            const u = this._findUnitByPerson(a[0] | 0);
-            if (!u) break;
-            if ((a[a.length - 1] | 0) === 1 && u.state === 3) {
-              const anchor = a[1] !== undefined ? this._findUnitByPerson(a[1] | 0) : null;
-              const ax = anchor && anchor.x >= 0 ? anchor.x : Math.floor(this.map.w / 2);
-              const ay = anchor && anchor.y >= 0 ? anchor.y : Math.floor(this.map.h / 2);
-              for (let r = 1; r <= 4; r++) {
-                let placed = false;
-                for (let dy = -r; dy <= r && !placed; dy++) {
-                  for (let dx = -r; dx <= r && !placed; dx++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-                    const nx = ax + dx, ny = ay + dy;
-                    const cell = this.map.get(nx, ny);
-                    if (cell && !cell.unit && this.map.inBounds(nx, ny)) {
-                      this.reenter(u, nx, ny); placed = true;
-                    }
-                  }
-                }
-                if (placed) break;
-              }
-              if (this.onEvent) this.onEvent({ type: "centerOn", x: u.x, y: u.y });
+            const sel = a[0] | 0;
+            let u6d = null;
+            if (sel === 1 && (a[2] | 0) >= 0 && (a[2] | 0) < 0x10) {
+              u6d = this.units[a[2] | 0] || null;   /* 部署槽重入（FUN_00418dd0 @0x492f90） */
+            } else {
+              u6d = this._findUnitByPerson(a[1] | 0);
             }
+            if (!u6d) break;
+            const anchor = this._findUnitByPerson(a[3] | 0);
+            if (!anchor || anchor.x < 0) break;    /* EXE 逐帧等待锚点在场；同步脚本直接放弃 */
+            const wrap41 = v => ((v % 41) + 41) % 41;
+            const tx = wrap41((a[4] | 0) + anchor.x), ty = wrap41((a[5] | 0) + anchor.y);
+            const dir6 = (a[6] | 0) === 0xffff ? u6d.dir : (a[6] | 0);
+            const styleWalk = (a[7] | 0) === 1;
+            const canStand = (x, y) => {
+              const c = this.map.get(x, y);
+              return !!c && this.map.inBounds(x, y) && (!c.unit || c.unit === u6d);
+            };
+            let px = tx, py = ty;
+            if (!canStand(px, py)) {
+              outer6d:
+              for (let r = 1; r <= 3; r++) {
+                for (let dy2 = -r; dy2 <= r; dy2++) for (let dx2 = -r; dx2 <= r; dx2++) {
+                  if (Math.max(Math.abs(dx2), Math.abs(dy2)) !== r) continue;
+                  if (canStand(tx + dx2, ty + dy2)) { px = tx + dx2; py = ty + dy2; break outer6d; }
+                }
+              }
+            }
+            const reenter = u6d.state !== 2 || u6d.x < 0;
+            if (u6d.x >= 0 && this.map.get(u6d.x, u6d.y) && this.map.get(u6d.x, u6d.y).unit === u6d) {
+              this.map.get(u6d.x, u6d.y).unit = null;
+            }
+            u6d.state = 2; u6d.x = px; u6d.y = py;
+            const cell6 = this.map.get(px, py);
+            if (cell6) cell6.unit = u6d;
+            u6d.dir = dir6;
+            if (this.onEvent) this.onEvent({ type: styleWalk ? "unitWalk" : "unitAppear", unit: u6d.id, x: px, y: py, dir: dir6 });
+            if (this.onEvent) this.onEvent({ type: "centerOn", x: px, y: py });
+            this.logEntry(u6d.name + (reenter ? " 入场" : " 移动") + "到 (" + px + "," + py + ")", "sys");
+            if (this.scene && this.scene.refreshUnits) { try { this.scene.refreshUnits(); } catch (e) {} }
             break;
           }
-          /* 原版 0x1B set_retreat_line（0x413c56，3 处）：unit+0x20 = 是否在离场时念撤退台词 */
+          /* 1:1 op 0x1B = FUN_00413c56（handler 表 0x410a9c 直证）。
+           * 流序按签名 [type2 值, type0x27 人物]：FUN_00418cb0 把人物记录 +0x20 = (值!=0)
+           * （离场撤退台词标记；值读第一个、人物读第二个——旧实现读反，已修）。 */
           case "op_1b": {
-            const u = this._findUnitByPerson(a[0] | 0);
-            if (u) u.retreatLine = (a[1] | 0) !== 0;
+            const u1b = this._findUnitByPerson(a[1] | 0);
+            if (u1b) u1b.retreatLine = (a[0] | 0) !== 0;
             break;
           }
           /* 原版 0x20（0x416fd8，2 处）：GS+0x11 = v==0xff ? (b & 0xe0) : ((b & 0xf0) | v) */
@@ -2843,16 +3003,56 @@
             this.GS[0x11] = v === 0xff ? (b & 0xe0) : ((b & 0xf0) | v);
             break;
           }
-          /* 原版 0x6C（0x410c3e，1 处）：复制人物字节 0x11..0x34（排除 0x26、0x2a） */
+          /* 1:1 op 0x6C = FUN_00410c39（handler 表 0x410be0 直证）。
+           * [src(2), dst(2)] 人物合并（唯一使用 R_19 [36,13]）：
+           * ① rec[0x00..0x34] 字节复制 src→dst，跳 0x26、0x2a（原版保护 pid/形象字节）；
+           * ② 5 word：dst.武具熟練[i] += src.武具熟練[i]；dst.副表[i] = src.副表[i]（相距 0x400 双表）。
+           * remake 映射：HP/MP/经验/等级/五维 raw 按 src 覆盖 dst；武器/护具熟练度累加；
+           * 空装备槽继承 src；src 撤退（state=3 离场）。 */
           case "op_6c": {
-            /* 人物属性在 re 层由 persons 表持有，脚本层无可写字段；记录以便存档复现 */
+            const src6 = this._findUnitByPerson(a[0] | 0);
+            const dst6 = this._findUnitByPerson(a[1] | 0);
+            if (!src6 || !dst6 || src6 === dst6) break;
+            for (const k of ["maxHp", "maxMp", "exp", "lvl"]) dst6[k] = src6[k];
+            dst6.hp = Math.min(src6.hp, dst6.maxHp);
+            dst6.mp = Math.min(src6.mp, dst6.maxMp);
+            if (src6._raw && dst6._raw) for (let i = 0; i < 5; i++) dst6._raw[i] = src6._raw[i];
+            for (const [slot, expKey] of [["weapon", "wexp"], ["armor", "aexp"]]) {
+              if (typeof dst6.gainEquipExp === "function" && typeof src6[expKey] === "number" && src6[expKey] > 0) {
+                dst6.gainEquipExp(slot, src6[expKey]);
+              }
+              if ((dst6[slot] == null || dst6[slot] === 255) && src6[slot] != null && src6[slot] !== 255) {
+                dst6[slot] = src6[slot];
+              }
+            }
+            if (src6.x >= 0 && this.map.get(src6.x, src6.y) && this.map.get(src6.x, src6.y).unit === src6) {
+              this.map.get(src6.x, src6.y).unit = null;
+            }
+            src6.state = 3; src6.x = -1; src6.y = -1; src6.isAlive = false;
             if (this.onEvent) this.onEvent({ type: "scriptNoop", op: "op_6c", args: a.slice() });
+            this.logEntry(src6.name + " 并入 " + dst6.name, "sys");
+            if (this.scene && this.scene.refreshUnits) { try { this.scene.refreshUnits(); } catch (e) {} }
             break;
           }
-          /* 原版 0x57（0x414ec4，1 处，未使用）：weather level = arg */
-          case "op_57":
-            this.weatherLevel = a[0] | 0;
+          /* 1:1 op 0x57 = FUN_00414edc（handler 表 0x410b8c 直证；旧注 0x414ec4 是函数体内地址，作废）。
+           * arg = 新天气等级；FUN_0041df0b(thiscall 0x4b3d08)：查 DAT_0048e100（第13轮 6×6 表）
+           * 行=场景地形 tid（天气对象 +0x11），列 [新等级] vs [当前天气 +0x4]——
+           * 相等 → 完全不动（原版怪癖：无音效无切换）；不等 → SE 0x86 + 转场（FUN_00449f91）切天气。
+           * 唯一使用 S_25 [5]（雨天入场）。 */
+          case "op_57": {
+            const lv = a[0] | 0;
+            const T = Battle.WEATHER_TERRAIN_MOD;
+            const lead57 = (this.sideUnits || this.units || []).find(u => u.isAlive && u.x >= 0);
+            const tid57 = lead57 ? (this.map.get(lead57.x, lead57.y)?.tid | 0) : 0;
+            const row57 = T[Math.min(Math.max(tid57, 0), 5)] || T[0];
+            if (row57[lv] !== row57[this.weather | 0]) {
+              if (this.onEvent) this.onEvent({ type: "se", id: 0x86 });
+              this.weather = lv;
+              if (this.onEvent) this.onEvent({ type: "weather", lv });
+              this.logEntry("天气转变（等级 " + lv + "）", "sys");
+            }
             break;
+          }
           /* 原版 0x5A ui_5a（0x44bac2，58 处）：战斗开场「开始战斗」字幕压在暗化地图上 20 tick */
           case "ui_5a":
             /* 原版 0x5A（0x44bac2）：字幕压在暗化地图上 20 tick（1 tick ≈ 40ms → 800ms），
@@ -2883,30 +3083,46 @@
             break;
           }
           case "op_4b": {
-            /* 原版 0x4B（eex_format_doc 行 234，0x415e31）：**设置玩家部署条目 k**。
-             * 参数 [k, x, y, dir, ?]：k 是连续递增的部署条目序号（0,1,2,…），
-             * 后面依次是坐标与朝向 —— 也就是「开局玩家单位的站位表」。
-             * 例：S_40 的 [0,5,1,1,0] [1,5,2,1,0] [2,5,3,1,0] … 是 6 个部署点坐标。
-             * 它**不是**把某个场上单位搬走 —— 旧实现按 person id 找单位并瞬移，
-             * 会把不在场的人物（17/12 等）当成单位乱放。 */
-            const k = a[0] | 0;
+            /* 原版 0x4b（handler 0x415e36，2026-11-06 capstone 逐行）：
+             * args [person, x, y, dir, slot]；查 GS 人物表拿单位对象，
+             * **在场**（state&3==0）→ 直接写 x/y/dir（移动+朝向，不隐藏）；
+             * 不在场 → 什么都不做。S_01 等 47 章姜维由 allies 空位入场后靠它挪位。
+             * 兼容保留：S_00 型剧本里人物不在场时 hidden 创建（等 unit_op_4c 现身）。 */
+            const pid4 = a[0] | 0;
             const dx = a[1] | 0, dy = a[2] | 0, ddir = a[3] !== undefined ? (a[3] | 0) : 2;
             if (!this._deployEntries) this._deployEntries = [];
-            this._deployEntries[k] = { x: dx, y: dy, dir: ddir };
-            /* 部署条目按序对应我方单位：第 k 条 → 第 k 个我方单位（state 2 的）。
-             * 原版是在开战后按部署表落位，这里把仍在场的我方单位放到对应条目上。 */
-            const mine = this.units.filter(u => u.faction === "ally" && u.state === 2 && u.x >= 0)
-              .sort((p, q) => (p.initialY ?? p.y) - (q.initialY ?? q.y) || (p.initialX ?? p.x) - (q.initialX ?? q.x));
-            const target = mine[k];
-            if (target) {
-              const cell = this.map.get(dx, dy);
-              if (cell && !cell.unit) {
-                const oc = this.map.get(target.x, target.y);
-                if (oc && oc.unit === target) oc.unit = null;
-                cell.unit = target;
-                target.x = dx; target.y = dy; target.dir = ddir;
+            this._deployEntries[pid4] = { x: dx, y: dy, dir: ddir };
+            let u4 = this.units.find(o => o.pid === pid4 && o.faction === "ally");
+            if (u4 && u4.state === 2) {
+              /* 在场：清旧格 → 落新格（等价原版写记录 x/y + 地图重挂） */
+              if (u4.x !== dx || u4.y !== dy) {
+                const oc4 = this.map.get(u4.x, u4.y);
+                if (oc4 && oc4.unit === u4) oc4.unit = null;
+                let nx = dx, ny = dy;
+                const nc = this.map.get(nx, ny);
+                if (!nc || nc.unit) {
+                  const spot = this.findFreeCellNear(dx, dy);
+                  if (spot) { nx = spot.x; ny = spot.y; } else { nx = u4.x; ny = u4.y; }
+                }
+                const fc = this.map.get(nx, ny);
+                if (fc && !fc.unit) { fc.unit = u4; u4.x = nx; u4.y = ny; }
               }
+              u4.dir = ddir;
+              if (this.onEvent) this.onEvent({ type: "refresh" });
+              break;
             }
+            if (!u4) {
+              const R = window.JW_REAL;
+              if (!R || !R.mkUnit) break;
+              const mk = R.mkUnit(pid4, dx, dy, "ally", { lv: 1, hidden: true, leader: pid4 === 0 });
+              u4 = new window.JW.Unit(mk.def, -1, -1, "ally", this);
+              this.units.push(u4);
+              if (this._syncSides) this._syncSides();
+            }
+            u4.deployX = dx; u4.deployY = dy;
+            if (u4.x >= 0) { const oc5 = this.map.get(u4.x, u4.y); if (oc5 && oc5.unit === u4) oc5.unit = null; }
+            u4.state = 1; u4.x = -1; u4.y = -1;
+            u4.dir = ddir;
             break;
           }
           case "actor_move": {
@@ -2937,6 +3153,52 @@
             }
             u.dir = dir;
             if (this.onEvent) this.onEvent({ type: "unitMoved", unit: u.id });
+            break;
+          }
+          /* 1:1 op 0x45 battle_settings = FUN_004122f1：arg3(type3e) = 敌我等级修正 DAT_00496e23 */
+          case "battle_settings": {
+            this._lvOffset = a[3] !== undefined && a[3] !== 65535 ? (a[3] | 0) : 0;
+            break;
+          }
+          /* 1:1 op 0x46/0x47 = FUN_004125c5/FUN_004129a4（handler 表直证）：
+           * allies [person,b1,x,y,dir,lv,promo,ai,...] 20 槽；enemies [person,b1,b2,x,y,dir,lv,promo,ai,...] 80 槽。
+           * 等级 = min(lv + 我方前4人均值 + settings修正, 99/110)（FUN_0047fab5 + FUN_0041885a）；
+           * 隐藏：allies b1 / enemies b2 → state 1，等 op_4c 现身（S_00 全员隐藏开场）。 */
+          case "battle_allies":
+          case "battle_enemies": {
+            const isEnemy = o.name === "battle_enemies";
+            /* V2 数据层 args = 条目数组直接平铺（[e0,e1,…]）；兼容包裹式 [[e0,e1,…]]。 */
+            const entries = Array.isArray(a[0]) && Array.isArray(a[0][0]) ? a[0] : a.filter(Array.isArray);
+            const faction = isEnemy ? "enemy" : "ally";
+            const R = window.JW_REAL;
+            const base = (this._partyLevelBase() || 1) + (this._lvOffset || 0);
+            for (const e of entries) {
+              if (!Array.isArray(e)) continue;
+              const pid = e[0] | 0;
+              if (pid === 65535 || !R || !R.mkUnit) continue;
+              const b1 = e[1] | 0;
+              const b2 = isEnemy ? (e[2] | 0) : 0;
+              const cx = e[isEnemy ? 3 : 2] | 0, cy = e[isEnemy ? 4 : 3] | 0;
+              const dv = e[isEnemy ? 5 : 4] | 0;
+              const lvRaw = e[isEnemy ? 6 : 5] | 0;
+              const promoRaw = e[isEnemy ? 7 : 6] | 0;
+              const aiRaw = e[isEnemy ? 8 : 7] | 0;
+              const lvl = Math.min((lvRaw === 65535 ? 0 : lvRaw) + base, isEnemy ? 110 : 99) || 1;
+              const promo = promoRaw === 65535 ? 2 : promoRaw;
+              const aiMode = aiRaw === 65535 ? 1 : aiRaw;
+              const hidden = isEnemy ? (b2 !== 0) : (b1 !== 0);
+              const old = this.units.find(o2 => o2.pid === pid && o2.faction === faction);
+              if (old && old.x >= 0) { const ocx = this.map.get(old.x, old.y); if (ocx && ocx.unit === old) ocx.unit = null; }
+              const mk = R.mkUnit(pid, cx, cy, faction, { lv: lvl, promo, ai: "ai" + aiMode, hidden: true, leader: old ? !!old.leader : false });
+              let u = new window.JW.Unit(mk.def, hidden ? -1 : cx, hidden ? -1 : cy, faction, this);
+              if (old) { u.id = old.id; const ix = this.units.indexOf(old); if (ix >= 0) this.units[ix] = u; }
+              else this.units.push(u);
+              u.deployX = cx; u.deployY = cy; u.dir = dv;
+              u.state = hidden ? 1 : 2;
+              if (!hidden) { const c = this.map.get(cx, cy); if (c && !c.unit) c.unit = u; }
+            }
+            if (this._syncSides) this._syncSides();
+            if (this.onEvent) this.onEvent({ type: "refresh" });
             break;
           }
           case "op_51": {
@@ -3024,6 +3286,70 @@
           case "play_sound": {
             // 原版 SE 编号；交给 UI 播放（缺失音源时静默）
             if (this.onEvent) this.onEvent({ type: "se", id: a[0] | 0 });
+            break;
+          }
+          case "popup": case "info": {
+            // 原版战场弹窗/情报框（S_01 战斗失败。/S_25 转职提示等）：等价 showBattleSay 气泡（2026-11-06 R9）
+            if (this.onEvent) this.onEvent({ type: "scriptInfo", text: String(a[0] || "") });
+            await new Promise(r => setTimeout(r, 1600));
+            break;
+          }
+          case "play_music": {
+            // 原版战场 BGM：CD 轨号（story.js SoundTrk/NN.mp3），mode 0 单次/1 循环
+            {
+              const SA = window.JW && window.JW.StoryAudio;
+              if (SA && SA.playMusic) { try { SA.playMusic(a[0] | 0, a[1] | 0); } catch (e) {} }
+            }
+            break;
+          }
+          case "set_resource": {
+            // 原版 0x3A 战场资源增减：金（S_44 搜刮）/民心类 res1/res2；写回 App 并随存档持久（2026-11-06 R9）
+            {
+              const App = (typeof window !== "undefined" && window.JW && window.JW.App) ? window.JW.App : null;
+              if (App) {
+                const kind = a[0] | 0, mode = a[1] | 0, val = a[2] | 0;
+                if (kind === 0) App.gold = Math.min(9999999, Math.max(0, (App.gold || 0) + val));
+                else {
+                  const key = kind === 1 ? 'res1' : 'res2';
+                  const cur = App[key] | 0;
+                  App[key] = Math.min(100, Math.max(0, mode === 1 ? cur + val : mode === 2 ? cur - val : val));
+                }
+              }
+            }
+            break;
+          }
+          case "battle_prepare": {
+            // 原版 0x4a 出场选择（S_00 等 9 处）：与 battle_select_units 同族 GS 出阵表写入口（0x41a73f）
+            {
+              const App = (typeof window !== "undefined" && window.JW && window.JW.App) ? window.JW.App : null;
+              if (App && App._parseSortie) {
+                const c = App._parseSortie(a);
+                if (c) App._sortieConstraint = c;
+              }
+            }
+            break;
+          }
+          case "choice": {
+            /* 原版 0x0C 战场选项（S_19「就此撤退/引出敌军」）：选项挂到战场，
+             * 结果存 _lastChoice=idx+1 供 test_choice 分支；超时/无 UI 默认第一项。
+             * 等待期间置 _scriptPause 防 poll 重入（2026-11-06 R9）。 */
+            {
+              const opts = String(a[0] || "").split("\n").map(s => s.trim()).filter(Boolean).slice(0, 3);
+              if (!opts.length) break;
+              const App = (typeof window !== "undefined" && window.JW && window.JW.App) ? window.JW.App : null;
+              const ui = App && App.ui;
+              if (!ui || !ui.showBattleChoice) { this._lastChoice = 1; break; }
+              this._scriptPause = true;
+              let pick = 0;
+              await new Promise((resolve) => {
+                let done = false;
+                const finish = (idx) => { if (done) return; done = true; clearTimeout(to); pick = idx; resolve(); };
+                const to = setTimeout(() => finish(0), 60000);
+                ui.showBattleChoice({ options: opts.map(t => ({ text: t })) }, finish);
+              });
+              this._scriptPause = false;
+              this._lastChoice = pick + 1;
+            }
             break;
           }
           case "unit_op_4f": {
@@ -3356,8 +3682,33 @@
           break;
         }
         case "op_2f": {
-          /* 原版 0x2F（1247 处，无参数）：疑似纯演出（清场/复位/画面切换）。
-           * 语义待 REA 反汇编确认；当前章节数据不含此 op，先按忽略处理。 */
+          /* 原版 0x2F（0x4151c2，出现1247次）：单位传送/移动。args=[mode(0=pid/1=槽), person或槽号, slot/ai, x, y, dir]。
+           * EXE 逻辑：按 mode 查找单位，传送到 (x, y)，设置方向 dir，触发 reach 事件。 */
+          const mode = a[0] | 0;
+          const who = a[1] | 0;
+          const slot = a[2] | 0;
+          const x = a[3] | 0;
+          const y = a[4] | 0;
+          const dir = a[5] !== undefined && a[5] !== 65535 ? (a[5] | 0) : 2;
+          let u = null;
+          if (mode === 0) {
+            u = this._findUnitByPerson(who);
+          } else if (mode === 1) {
+            const side = this._unitsOfSide(slot);
+            u = side && side.length ? side[0] : null;
+          }
+          if (u && u.isAlive && this.map.inBounds(x, y)) {
+            const oc = this.map.get(u.x, u.y);
+            if (oc && oc.unit === u) oc.unit = null;
+            const nc = this.map.get(x, y);
+            if (!nc || !nc.unit) {
+              u.x = x; u.y = y;
+              nc.unit = u;
+              u.dir = dir;
+              if (this.onEvent) this.onEvent({ type: "unitTeleport", unit: u.id, x, y, dir });
+              this.checkBattleEvents("reach", u, x, y);
+            }
+          }
           break;
         }
         case "set_flag": {
@@ -3419,6 +3770,11 @@
     async pollEexEvents() {
       const CH = (window.JW_BATTLE_EVENTS_V2 || {})[this._eexFile];
       if (!CH || this._eexDone) return false;
+      /* 1:1 原版事件循环是串行的：演出段执行期间（_scriptPause，等价原版主循环
+       * 阻塞在演出上）与战斗已结算后，战场检查点不得重入选段。否则 S_00 sec10
+       * 这种自锁旗在链尾的长链会被每个 unitDone 检查点从头并发重跑（op_51 反复、
+       * _eexScene 多次 ++、scriptBattleOver 洪泛，2026-11-06 实证）。 */
+      if (this._scriptPause || this.state !== "playing") return true;
       const sc = CH.scenes[this._eexScene || 0];
       if (!sc) { this._eexDone = true; return true; }
       let win = null;                                 // select：最后满足者胜出
@@ -3496,7 +3852,7 @@
           if (this.forceWin && this.onEvent) this.onEvent({ type: "scriptForceWin", reason: this.forceWin });
         }
         // 事件旗联动：赵云撤退 → event5（S_00 结算段由 test_event5 触发）
-        if (this._scriptFlags.zhaoRetreated) this._scriptFlags.event5 = true;
+        if (this._scriptFlags.zhaoRetreated || this._scriptFlags.zhaoRemoved) this._scriptFlags.event5 = true;
       }
     }
 
@@ -3538,8 +3894,8 @@
       // 失败：主将阵亡（原版 0x46 首个我方强制出场单位为主将）
       const leader = this.sideUnits.find(u => u.leader) || null;
       if (leader && !leader.isAlive) return { result: "lose", reason: "主将阵亡" };
-      // 失败：超过回合限制
-      if (this.maxRounds && this.round > this.maxRounds) return { result: "lose", reason: "回合数超过" + this.maxRounds };
+      // 回合上限失败不在这里判：原版 FUN_0044eec5 只在回合边界（外循环 while(cur<cap)）
+      // 检查，战斗中阵亡只触发即时胜负。用 roundLimitHit() 在 endTurn 末尾判。
       // 关卡自定义条件
       if (this.config.objective === "survive") {
         return null;
@@ -3553,6 +3909,9 @@
       }
       return null;
     }
+
+    // 回合上限判定（原版 0 基外循环：打满第 maxRounds 回合即败，无宽限）
+    roundLimitHit() { return !!(this.maxRounds && this.round >= this.maxRounds); }
 
     // ---- AI ----
     async runEnemyTurn() {
@@ -3667,16 +4026,19 @@
         if (!canHit) { enemy.hasActed = true; return; }
       }
       let best = null, bestDist = Infinity, pursueTarget = null;
-      // 3（攻击武将）/5（跟随武将）：锁定指定人物（不存在则退回最近目标）
+      // EXE FUN_0043d509：用目标队列逐个评估（FUN_0045418f 取下一目标 → FUN_004401a8 判攻击可达 → action=4 沿路径移动攻击）。
+      // remake 无法完整复现运行时队列顺序，近似为：优先血量百分比最低的敌人（最易被击破，符合“逐个评估、选第一个可攻击”的语义），其次距离最近。
+      const scored = targets.map(t => {
+        const hpRatio = t.maxHp > 0 ? t.hp / t.maxHp : 1;
+        const d = U.chebyshev(enemy.x, enemy.y, t.x, t.y);
+        return { t, hpRatio, d };
+      });
+      scored.sort((a, b) => a.hpRatio - b.hpRatio || a.d - b.d);
+      if (scored.length) { best = scored[0].t; bestDist = scored[0].d; }
+      // 3（攻击武将）/5（跟随武将）：锁定指定人物（不存在则退回上面选定的目标）
       if ((aiMode === 3 || aiMode === 5) && enemy.aiPid != null) {
         const wanted = this.units.find(u => u.pid === enemy.aiPid && u.isAlive);
         if (wanted) { best = wanted; pursueTarget = wanted; bestDist = U.chebyshev(enemy.x, enemy.y, wanted.x, wanted.y); }
-      }
-      if (!best) {
-        for (const t of targets) {
-          const d = U.chebyshev(enemy.x, enemy.y, t.x, t.y);
-          if (d < bestDist) { bestDist = d; best = t; }
-        }
       }
       // 4（到达地点）/6（逃至地点）：走向指定格；6 只走不打
       if ((aiMode === 4 || aiMode === 6) && enemy.aiX != null && enemy.aiY != null) {
@@ -3713,18 +4075,29 @@
         const st = this.aiStepToward(enemy, pursueTarget.x, pursueTarget.y);
         if (st) bestPos = st;
       }
+      /* 0/1（被动/主动出击）：EXE 沿路径逐步推进，向选定攻击目标 best 推进一格（FUN_00437e23 语义），再重判射程；
+       * 3/5/4/6 的目标点已在前面用 aiStepToward 处理，此处只对 0/1 补充。 */
+      if (!bestPos && best) {
+        const st = this.aiStepToward(enemy, best.x, best.y);
+        if (st) bestPos = st;
+      }
       if (!bestPos) bestPos = this.aiChoosePosition(enemy);
       if (bestPos.x !== enemy.x || bestPos.y !== enemy.y) {
         this.move(enemy, bestPos.x, bestPos.y);
         await new Promise(r => setTimeout(r, 200));
       }
-      // 再判断攻击
+      // 再判断攻击：移动后可能进入射程，优先攻击 best（否则按评分取最高分目标）
+      let attackTarget = null;
       const range3 = this.attackRange(enemy, enemy.x, enemy.y);
-      const target = range3.map(p => this.map.get(p.x, p.y)?.unit)
-        .filter(u => u && u.isAlive && u.faction !== enemy.faction)
-        .sort((a, b) => this.aiPhysScore(enemy, b, { x: enemy.x, y: enemy.y }) - this.aiPhysScore(enemy, a, { x: enemy.x, y: enemy.y }))[0];
-      if (target && !moveOnly) {
-        await this.attack(enemy, target);
+      if (best && range3.some(p => p.x === best.x && p.y === best.y)) {
+        attackTarget = best;
+      } else {
+        attackTarget = range3.map(p => this.map.get(p.x, p.y)?.unit)
+          .filter(u => u && u.isAlive && u.faction !== enemy.faction)
+          .sort((a, b) => this.aiPhysScore(enemy, b, { x: enemy.x, y: enemy.y }) - this.aiPhysScore(enemy, a, { x: enemy.x, y: enemy.y }))[0];
+      }
+      if (attackTarget && !moveOnly) {
+        await this.attack(enemy, attackTarget);
       }
       enemy.hasActed = true;
     }
