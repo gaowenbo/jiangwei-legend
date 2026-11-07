@@ -1,0 +1,11 @@
+综合回归（R6-R9 联测，2026-11-06 第62轮）
+PASS boot 59章
+PASS R6结算链仍通
+PASS 无重入洪泛 over<=3
+  结算链: {"events":"duelCinematic,scriptRemove,scriptRemove,scriptRemove,scriptBattleOver","over":1,"screen":"result","state":"end","lastWin":"win","ev5":true,"zr":true,"next":"ch01","unlocked":"ch00,ch01"}
+PASS R7策略伤害正常(s1>s0>0)
+  伤害: {"s0":16,"s1":20}
+PASS Tier1抽查 ch18/19/44
+  抽查: [{"id":"ch18","units":44,"side":2,"v2":true},{"id":"ch19","units":49,"side":2,"v2":true},{"id":"ch43","units":69,"side":2,"v2":true}]
+汇总: {"boot 59章":true,"R6结算链仍通":true,"无重入洪泛 over<=3":true,"R7策略伤害正常(s1>s0>0)":true,"Tier1抽查 ch18/19/44":true}
+

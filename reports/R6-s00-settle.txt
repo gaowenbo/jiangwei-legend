@@ -1,0 +1,28 @@
+PASS boot+59章
+{
+  "events": "duelCinematic,scriptRemove,scriptItem,phase,unitDone,unitDone,unitDone,unitDone,unitDone,unitDone,scriptItem,unitDone,unitDone,unitDone,unitDone,unitDone,unitDone,unitDone,unitDone,phase,scriptRemove,scriptRemove,scriptBattleOver,scriptScenarioDone",
+  "over": 1,
+  "done": 1,
+  "restoreCnt": 14,
+  "screen": "result",
+  "state": "end",
+  "eexScene": 3,
+  "f3": true,
+  "flag0": true,
+  "ev5": true,
+  "zr": true,
+  "lastResult": {
+    "result": "win",
+    "reason": "战斗结束"
+  },
+  "nextChapter": "ch01",
+  "unlocked": "ch00,ch01"
+}
+PASS 结算链贯通
+PASS event5联动
+PASS 胜利结算
+PASS 章节推进
+PASS 无事件洪泛(over<=3)
+FAIL 无unitDone风暴(<=12)
+汇总: {"boot+59章":true,"结算链贯通":true,"event5联动":true,"胜利结算":true,"章节推进":true,"无事件洪泛(over<=3)":true,"无unitDone风暴(<=12)":false}
+
